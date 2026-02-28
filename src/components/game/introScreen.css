@@ -1,0 +1,294 @@
+/* ============================================================
+   DRAGSCAPE · IntroScreen — Wordscapes nature style
+   ============================================================ */
+
+.is-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow-y: auto;
+  background: linear-gradient(180deg, #1a5c8a 0%, #4a9fd4 28%, #74bce0 52%, #9ed4ec 75%, #c8e8f8 100%);
+}
+
+.is-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem 1.5rem 2.5rem;
+  width: 100%;
+  max-width: 400px;
+  margin: auto;
+}
+
+/* ── Top action buttons (profile + logout) ───────────────── */
+.is-top-actions {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 50;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.is-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(255,255,255,0.18);
+  border: 1.5px solid rgba(255,255,255,0.35);
+  border-radius: 50%;
+  color: rgba(255,255,255,0.85);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background 0.18s, color 0.18s, border-color 0.18s;
+}
+.is-action-btn:hover {
+  background: rgba(255,255,255,0.28);
+  border-color: rgba(255,255,255,0.5);
+}
+.is-action-btn--danger:hover {
+  background: rgba(251,113,133,0.22);
+  border-color: rgba(251,113,133,0.55);
+  color: #fca5a5;
+}
+
+/* ── Badge ───────────────────────────────────────────────── */
+.is-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.9);
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 20px;
+  padding: 0.28rem 0.85rem;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* ── Title ───────────────────────────────────────────────── */
+.is-title {
+  margin: 0;
+  font-size: clamp(2.8rem, 12vw, 4rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 3px 20px rgba(0,0,0,0.25);
+}
+
+.is-title-drag {
+  color: #fff;
+}
+
+.is-title-scape {
+  color: rgba(255,255,255,0.7);
+}
+
+.is-subtitle {
+  margin: -0.5rem 0 0;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.7);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+/* ── Dimension cards ─────────────────────────────────────── */
+.is-dims {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+}
+
+.is-dim-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.is-dim-icon { flex-shrink: 0; color: #fff; }
+
+.is-dim-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.85);
+  line-height: 1.35;
+}
+
+/* ── Difficulty section ────────────────────────────────────── */
+.is-difficulty-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.is-section-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.4);
+  text-align: center;
+  margin: 0;
+}
+
+.is-difficulty-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.is-diff-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.7rem 0.5rem;
+  background: rgba(255,255,255,0.1);
+  border: 1.5px solid rgba(255,255,255,0.18);
+  border-radius: 14px;
+  cursor: pointer;
+  color: rgba(255,255,255,0.7);
+  font-family: 'Inter', system-ui, sans-serif;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.is-diff-btn:hover {
+  background: rgba(255,255,255,0.16);
+  border-color: rgba(255,255,255,0.3);
+}
+
+.is-diff-btn--active {
+  background: rgba(255,255,255,0.2);
+  border-color: var(--diff-color);
+  color: var(--diff-color);
+  box-shadow: 0 0 18px -4px var(--diff-color);
+}
+
+.is-diff-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.is-diff-desc {
+  font-size: 0.58rem;
+  font-weight: 400;
+  text-align: center;
+  line-height: 1.35;
+  color: rgba(255,255,255,0.45);
+}
+
+.is-diff-btn--active .is-diff-desc {
+  color: rgba(255,255,255,0.6);
+}
+
+/* ── Info strip ──────────────────────────────────────────── */
+.is-info-strip {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 16px;
+  padding: 0.85rem 1.5rem;
+  width: 100%;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.is-info-item { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
+.is-info-num  { font-size: 1.4rem; font-weight: 800; color: #fff; line-height: 1; }
+.is-info-desc { font-size: 0.68rem; font-weight: 500; color: rgba(255,255,255,0.6); letter-spacing: 0.04em; }
+.is-info-sep  { width: 1px; height: 28px; background: rgba(255,255,255,0.2); }
+
+/* ── Start button ────────────────────────────────────────── */
+.is-start-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 1rem;
+  background: rgba(255,255,255,0.92);
+  border: none;
+  border-radius: 18px;
+  color: #1e4a2a;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.2);
+  transition: transform 0.15s ease, box-shadow 0.2s, background 0.15s;
+}
+
+.is-start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 36px rgba(0,0,0,0.28);
+  background: #fff;
+}
+
+/* ── Instructions ────────────────────────────────────────── */
+.is-instructions {
+  font-size: 0.73rem;
+  color: rgba(255,255,255,0.55);
+  text-align: center;
+  line-height: 1.6;
+  max-width: 300px;
+  margin: -0.2rem 0 0;
+}
+
+/* ============================================================
+   DESKTOP RESPONSIVE  (≥ 768px)
+   ============================================================ */
+@media (min-width: 768px) {
+  .is-content {
+    max-width: 600px;
+    gap: 1.2rem;
+    padding: 2.5rem 2.5rem 3rem;
+  }
+
+  .is-title {
+    font-size: clamp(3.5rem, 8vw, 5.5rem);
+  }
+
+  /* 4-column dimension grid on wide screens */
+  .is-dims {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.65rem;
+  }
+
+  .is-diff-btn {
+    padding: 0.9rem 0.6rem;
+  }
+
+  .is-diff-label   { font-size: 0.85rem; }
+  .is-diff-desc    { font-size: 0.64rem; }
+  .is-dim-label    { font-size: 0.76rem; }
+  .is-info-strip   { max-width: 420px; }
+  .is-start-btn    { max-width: 380px; font-size: 1.05rem; padding: 1.1rem; }
+  .is-instructions { max-width: 440px; font-size: 0.78rem; }
+}

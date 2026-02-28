@@ -1,0 +1,58 @@
+/* ─── Dragscape · Global Reset & Variables ─── */
+
+:root {
+  /* Serene Blue palette */
+  --col-platinum:   #E7ECEF;
+  --col-navy:       #274C77;
+  --col-blue:       #6096BA;
+  --col-lightblue:  #A3CEF1;
+  --col-gray:       #8B8C89;
+
+  /* Dark bg layers */
+  --bg-darkest: #070e1a;
+  --bg-deep:    #0d1b2a;
+  --bg-mid:     #112240;
+
+  color-scheme: dark;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg-darkest);
+  color: var(--col-platinum);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+button, input, textarea, select {
+  font-family: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img, svg {
+  display: block;
+  max-width: 100%;
+}

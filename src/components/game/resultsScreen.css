@@ -1,0 +1,313 @@
+/* ============================================================
+   DRAGSCAPE · ResultsScreen
+   ============================================================ */
+
+.rs-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #1a5c8a 0%, #4a9fd4 28%, #74bce0 52%, #9ed4ec 75%, #c8e8f8 100%);
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow-y: auto;
+}
+
+/* ── Bokeh ───────────────────────────────────────────────── */
+.rs-bokeh-wrap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.rs-bokeh {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.12;
+}
+
+.rs-bokeh--1 { width: 320px; height: 320px; top: -60px;   left: -80px;  background: #1a4a7a; }
+.rs-bokeh--2 { width: 280px; height: 280px; bottom: -50px; right: -50px; background: #ffffff; opacity: 0.18; filter: blur(80px); }
+
+/* ── Top action buttons (profile + logout) ────────────────── */
+.rs-top-actions {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 50;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.rs-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(255,255,255,0.18);
+  border: 1.5px solid rgba(255,255,255,0.35);
+  border-radius: 50%;
+  color: rgba(255,255,255,0.85);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background 0.18s, color 0.18s, border-color 0.18s;
+}
+.rs-icon-btn:hover {
+  background: rgba(255,255,255,0.28);
+  border-color: rgba(255,255,255,0.5);
+}
+.rs-icon-btn--danger:hover {
+  background: rgba(251,113,133,0.22);
+  border-color: rgba(251,113,133,0.55);
+  color: #fca5a5;
+}
+
+/* ── Content ─────────────────────────────────────────────── */
+.rs-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem 1.5rem 2.5rem;
+  width: 100%;
+  max-width: 400px;
+  background: linear-gradient(148deg, rgba(20,50,95,0.58) 0%, rgba(8,20,48,0.70) 100%);
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 28px;
+  box-shadow: 0 20px 60px -12px rgba(0,0,0,0.3);
+}
+
+/* ── Difficulty badge ─────────────────────────────────────── */
+.rs-diff-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0.25rem 0.85rem;
+  border: 1.5px solid;
+  border-radius: 20px;
+  background: rgba(0,0,0,0.2);
+}
+
+/* ── Trophy ──────────────────────────────────────────────── */
+.rs-trophy-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 90px;
+  height: 90px;
+}
+
+.rs-trophy-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(163, 206, 241, 0.2);
+  background: radial-gradient(circle, rgba(96,150,186,0.15) 0%, transparent 70%);
+  animation: trophyPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes trophyPulse {
+  0%, 100% { transform: scale(1);    opacity: 0.8; }
+  50%       { transform: scale(1.06); opacity: 1;   }
+}
+
+.rs-trophy-icon {
+  color: #fbbf24;
+  filter: drop-shadow(0 4px 18px rgba(251, 191, 36, 0.5));
+  animation: trophyFloat 3s ease-in-out infinite;
+}
+
+@keyframes trophyFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-4px); }
+}
+
+/* ── Stars ───────────────────────────────────────────────── */
+.rs-stars {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.rs-star {
+  color: rgba(163, 206, 241, 0.15);
+  transition: color 0.3s, filter 0.3s;
+}
+
+.rs-star--lit {
+  color: #fbbf24;
+  filter: drop-shadow(0 2px 8px rgba(251, 191, 36, 0.6));
+}
+
+/* ── Score ───────────────────────────────────────────────── */
+.rs-score-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.rs-score-num {
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: #A3CEF1;
+  line-height: 1;
+}
+
+.rs-score-sep {
+  font-size: 1.8rem;
+  font-weight: 300;
+  color: rgba(231, 236, 239, 0.25);
+}
+
+.rs-score-total {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: rgba(231, 236, 239, 0.35);
+}
+
+.rs-pct {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: rgba(231, 236, 239, 0.5);
+  margin-top: -0.5rem;
+}
+
+.rs-descriptor {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+/* ── Dimension breakdown ─────────────────────────────────── */
+.rs-dims {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.rs-dims-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(231, 236, 239, 0.3);
+  text-transform: uppercase;
+  margin: 0 0 0.15rem;
+}
+
+.rs-dim-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.rs-dim-icon { color: #6096BA; flex-shrink: 0; }
+
+.rs-dim-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: rgba(231, 236, 239, 0.65);
+  flex: 1;
+  min-width: 0;
+}
+
+.rs-dim-score {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(231, 236, 239, 0.8);
+  flex-shrink: 0;
+}
+
+.rs-dim-pct {
+  margin-left: 6px;
+  font-weight: 800;
+  font-size: 0.72rem;
+}
+
+/* ── Action buttons row ──────────────────────────────────── */
+.rs-actions {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.rs-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 1rem;
+  border: none;
+  border-radius: 18px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s;
+}
+
+.rs-btn--home {
+  background: rgba(255, 255, 255, 0.07);
+  color: #a0aec0;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  box-shadow: none;
+}
+
+.rs-btn--home:hover {
+  background: rgba(255, 255, 255, 0.13);
+  color: #e2e8f0;
+  transform: translateY(-2px);
+}
+
+.rs-btn--play {
+  background: linear-gradient(135deg, #6096BA, #274C77);
+  color: #E7ECEF;
+  box-shadow: 0 10px 30px rgba(96, 150, 186, 0.35);
+}
+
+.rs-btn--play:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 38px rgba(96, 150, 186, 0.5);
+}
+
+/* ============================================================
+   DESKTOP RESPONSIVE  (≥ 768px)
+   ============================================================ */
+@media (min-width: 768px) {
+  .rs-content {
+    max-width: 540px;
+    gap: 1.2rem;
+    padding: 2.5rem 2.5rem 3rem;
+  }
+
+  .rs-trophy-wrap  { width: 110px; height: 110px; }
+  .rs-score-num    { font-size: 4.5rem; }
+  .rs-score-sep,
+  .rs-score-total  { font-size: 2.2rem; }
+  .rs-pct          { font-size: 1.1rem; }
+  .rs-descriptor   { font-size: 1.1rem; }
+  .rs-dims         { padding: 1.25rem; }
+  .rs-dim-label    { font-size: 0.85rem; }
+  .rs-dims-label   { font-size: 0.72rem; }
+  .rs-actions      { max-width: 380px; }
+  .rs-btn          { font-size: 1.05rem; padding: 1.1rem; }
+}
