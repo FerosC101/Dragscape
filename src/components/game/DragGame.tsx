@@ -56,7 +56,7 @@ export default function DragGame({
   const [mcqOpen,     setMcqOpen]     = useState(false)
   const [mcqAnswered, setMcqAnswered] = useState(false)
   const [chosenId,    setChosenId]    = useState<string | null>(null)
-  const [hint,        setHint]        = useState(false)
+  const [hint,        setHint]        = useState(true)
 
   // ── Responsive circle scale ──────────────────────────────────────────────
   const [circleScale, setCircleScale] = useState(() => {

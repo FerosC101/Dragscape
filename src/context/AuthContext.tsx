@@ -89,17 +89,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (identifier: string, password: string): Promise<AuthResult> => {
     try {
       let email = identifier.trim().toLowerCase()
+      let knownProfile: User | null = null
 
       // Treat as username → look up email in Firestore
       if (!email.includes('@')) {
         const q    = query(collection(db, 'users'), where('username', '==', email))
         const snap = await getDocs(q)
         if (snap.empty) return { success: false, error: 'No account found with that username.' }
-        email = (snap.docs[0].data() as User).email
+        knownProfile = snap.docs[0].data() as User
+        email = knownProfile.email
       }
 
-      await signInWithEmailAndPassword(auth, email, password)
-      // onAuthStateChanged will handle fetching the profile and setting user state
+      const cred = await signInWithEmailAndPassword(auth, email, password)
+
+      // Immediately unblock the UI — don't wait for onAuthStateChanged + Firestore
+      // (onAuthStateChanged will still run and update with full profile in background)
+      setUser(knownProfile ?? {
+        id:        cred.user.uid,
+        fullName:  cred.user.displayName ?? '',
+        username:  '',
+        email:     cred.user.email ?? '',
+        createdAt: new Date().toISOString(),
+      })
+
       return { success: true }
     } catch (err: unknown) {
       const code = (err as { code?: string }).code ?? ''
