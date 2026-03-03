@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { collection, addDoc } from 'firebase/firestore'
+import { collection, doc, setDoc } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
 import { useAuth } from '../../context/AuthContext'
 import { getLevelsByDifficulty } from '../../data/levels'
@@ -63,23 +63,25 @@ export default function GameScreen() {
           const total     = levels.length
           const pct       = Math.round((newScore / total) * 100)
           const dimScores = buildDimScores(levels, newResults)
-          const ref       = collection(db, 'users', user.id, 'gameHistory')
-          await addDoc(ref, {
-            id:         '',          // will be overwritten after doc is created
-            playedAt:   new Date().toISOString(),
+
+          // Generate the document reference first so we have the ID up-front.
+          // This avoids the two-step addDoc → updateDoc pattern.
+          const histRef = doc(collection(db, 'users', user.id, 'gameHistory'))
+          await setDoc(histRef, {
+            id:        histRef.id,
+            playedAt:  new Date().toISOString(),
             difficulty,
-            score:      newScore,
+            score:     newScore,
             total,
             pct,
             dimScores,
-          }).then(async docRef => {
-            // store the auto-id back into the document
-            const { updateDoc, doc } = await import('firebase/firestore')
-            await updateDoc(doc(db, 'users', user.id, 'gameHistory', docRef.id), { id: docRef.id })
           })
-        } catch {
-          // non-critical — game still shows results if save fails
+        } catch (err) {
+          // Log so the developer can see Firestore write failures in the console
+          console.error('[Dragscape] Failed to save game record to Firestore:', err)
         }
+      } else {
+        console.warn('[Dragscape] Game completed but user is null — record not saved.')
       }
     } else {
       setScore(newScore)

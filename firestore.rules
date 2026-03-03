@@ -2,23 +2,42 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Admin: full read access to everything ──────────────────────────────
-    // Sign in with admin@dragscape.com to access the research dashboard.
+    // ── Helper functions ───────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isAdmin() {
+      return isSignedIn()
+          && request.auth.token.email == 'admin@dragscape.com';
+    }
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // ── Admin: full read access to every document ──────────────────────────
+    // Covers both direct reads and collectionGroup queries (/{document=**}
+    // is a recursive wildcard that matches all document paths).
     match /{document=**} {
-      allow read: if request.auth != null
-                  && request.auth.token.email == 'admin@dragscape.com';
+      allow read: if isAdmin();
     }
 
-    // ── Regular users: only their own profile ──────────────────────────────
+    // ── Admin: explicit collectionGroup support for gameHistory ────────────
+    // Firebase requires a path-scoped rule for collectionGroup queries.
+    // This allows the admin dashboard to run:
+    //   getDocs(collectionGroup(db, 'gameHistory'))
+    match /{path=**}/gameHistory/{gameId} {
+      allow read: if isAdmin();
+    }
+
+    // ── Regular users: own profile document ───────────────────────────────
     match /users/{userId} {
-      allow read, write: if request.auth != null
-                         && request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
     }
 
-    // ── Regular users: only their own game history ─────────────────────────
+    // ── Regular users: own game history sub-collection ────────────────────
     match /users/{userId}/gameHistory/{gameId} {
-      allow read, write: if request.auth != null
-                         && request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
     }
   }
 }
+

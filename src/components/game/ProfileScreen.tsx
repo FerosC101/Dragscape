@@ -55,8 +55,8 @@ export default function ProfileScreen({ onBack }: Props) {
         const q    = query(ref, orderBy('playedAt', 'desc'), limit(20));
         const snap = await getDocs(q);
         setHistory(snap.docs.map(d => d.data() as GameRecord));
-      } catch {
-        // silently handle — user sees empty state
+      } catch (err) {
+        console.error('[Dragscape] Failed to load game history from Firestore:', err)
       } finally {
         setLoading(false);
       }

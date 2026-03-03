@@ -143,7 +143,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email:     data.email.trim().toLowerCase(),
         createdAt: new Date().toISOString(),
       }
-      await setDoc(doc(db, 'users', cred.user.uid), profile)
+      try {
+        await setDoc(doc(db, 'users', cred.user.uid), profile)
+      } catch (fsErr) {
+        // Auth succeeded but Firestore profile write failed.
+        // Log it — the user can still play, but username login won't work
+        // until the profile is written.
+        console.error('[Dragscape] Failed to write user profile to Firestore:', fsErr)
+      }
       setUser(profile)
       return { success: true }
     } catch (err: unknown) {
