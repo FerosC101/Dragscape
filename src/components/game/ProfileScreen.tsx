@@ -8,18 +8,12 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../context/AuthContext';
-import type { GameRecord, Difficulty, Dimension } from '../../types';
+import type { GameRecord, Dimension } from '../../types';
 import './profileScreen.css';
 
 interface Props {
   onBack: () => void;
 }
-
-const DIFF_META: Record<Difficulty, { label: string; color: string }> = {
-  easy:   { label: '⚡ Easy',   color: '#4ade80' },
-  medium: { label: '🔥 Medium', color: '#fbbf24' },
-  hard:   { label: '👑 Hard',   color: '#fb7185' },
-};
 
 const DIM_META: Record<Dimension, { icon: typeof BookOpen; color: string }> = {
   'Word Recognition':      { icon: BookOpen, color: '#4ade80' },
@@ -140,20 +134,23 @@ export default function ProfileScreen({ onBack }: Props) {
 
           {!loading && history.map(record => {
             const stars   = getStars(record.pct);
-            const diff    = DIFF_META[record.difficulty];
             const pctColor = record.pct >= 75 ? '#4ade80' : record.pct >= 50 ? '#fbbf24' : '#fb7185';
+            const sessionDim = record.dimScores?.length === 1 ? record.dimScores[0].dimension : null;
+            const dimColor = sessionDim ? DIM_META[sessionDim]?.color : '#94a3b8';
 
             return (
               <div key={record.id} className="ps-record">
-                {/* Row 1: date + difficulty + score */}
+                {/* Row 1: date + dimension + score */}
                 <div className="ps-record-header">
                   <span className="ps-record-date">
                     <Calendar size={11} />
                     {formatDate(record.playedAt)}
                   </span>
-                  <span className="ps-record-diff" style={{ color: diff.color }}>
-                    {diff.label}
-                  </span>
+                  {sessionDim && (
+                    <span className="ps-record-diff" style={{ color: dimColor }}>
+                      {sessionDim}
+                    </span>
+                  )}
                   <span className="ps-record-pct" style={{ color: pctColor }}>
                     {record.score}/{record.total} · {record.pct}%
                   </span>

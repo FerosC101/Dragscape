@@ -37,7 +37,6 @@ export interface DimScore {
 export interface GameRecord {
   id:         string
   playedAt:   string          // ISO timestamp
-  difficulty: Difficulty
   score:      number
   total:      number
   pct:        number
@@ -75,7 +74,7 @@ export interface RegisterData {
 export interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
-  login: (identifier: string, password: string) => Promise<AuthResult>
+  login: (identifier: string, password: string, rememberMe?: boolean) => Promise<AuthResult>
   register: (data: RegisterData) => Promise<AuthResult>
   logout: () => void
 }

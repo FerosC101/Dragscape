@@ -26,15 +26,17 @@
  */
 
 import { useEffect, useState, useMemo, useCallback, Fragment, type CSSProperties } from 'react'
-import { collection, getDocs, collectionGroup } from 'firebase/firestore'
-import { db } from '../../lib/firebase'
+import { initializeApp, deleteApp } from 'firebase/app'
+import { getAuth as getFirebaseAuth, createUserWithEmailAndPassword } from 'firebase/auth'
+import { collection, getDocs, doc, writeBatch, setDoc } from 'firebase/firestore'
+import { db, auth, firebaseConfig } from '../../lib/firebase'
 import { useAuth } from '../../context/AuthContext'
-import type { User, GameRecord, Difficulty, Dimension } from '../../types'
+import type { User, GameRecord, Dimension } from '../../types'
 import {
   Users, BarChart3, FileDown, LogOut, RefreshCw,
   Trophy, TrendingUp, Gamepad2, Search, ChevronDown, ChevronRight,
   BookOpen, FileText, Type, Star, Shield, Download, AlertTriangle,
-  Calendar,
+  Calendar, UserPlus, Trash2, X,
 } from 'lucide-react'
 import './admin.css'
 
@@ -74,12 +76,6 @@ const DIM_ICONS: Record<Dimension, typeof BookOpen> = {
   'Word Form':              Type,
 }
 
-const DIFF_META: Record<Difficulty, { label: string; color: string }> = {
-  easy:   { label: 'Easy',   color: '#4ade80' },
-  medium: { label: 'Medium', color: '#fbbf24' },
-  hard:   { label: 'Hard',   color: '#ef4444' },
-}
-
 const SCORE_RANGES = [
   { label: 'Outstanding',         range: '90–100', min: 90, max: 100, color: '#22c55e' },
   { label: 'Very Satisfactory',   range: '80–89',  min: 80, max: 89,  color: '#86efac' },
@@ -110,7 +106,7 @@ function getRange(pct: number) {
 function downloadCSV(users: UserRow[]) {
   const cols = [
     'User ID', 'Full Name', 'Username', 'Email', 'Registered At',
-    'Game #', 'Played At', 'Difficulty',
+    'Game #', 'Played At', 'Dimension',
     'Score', 'Total Questions', 'Percentage (%)', 'DepEd Descriptor',
     'Word Recognition (correct/total)', 'Meaning Identification (correct/total)',
     'Context Comprehension (correct/total)', 'Word Form (correct/total)',
@@ -130,9 +126,12 @@ function downloadCSV(users: UserRow[]) {
           const s = g.dimScores?.find(x => x.dimension === d)
           return s ? `${s.correct}/${s.total}` : '—'
         }
+        const dim = g.dimScores?.length === 1
+          ? g.dimScores[0].dimension
+          : (g.dimScores?.length ? g.dimScores[0].dimension : '—')
         rows.push([
           u.id, u.fullName, u.username, u.email, u.createdAt,
-          String(gi + 1), g.playedAt, g.difficulty,
+          String(gi + 1), g.playedAt, dim,
           String(g.score), String(g.total), String(g.pct),
           getRange(g.pct).label,
           ds('Word Recognition'), ds('Meaning Identification'),
@@ -170,39 +169,78 @@ function BarFill({ pct, color }: { pct: number; color: string }) {
 export default function AdminDashboard() {
   const { logout } = useAuth()
 
-  const [tab,      setTab]      = useState<Tab>('overview')
-  const [users,    setUsers]    = useState<UserRow[]>([])
-  const [loading,  setLoading]  = useState(true)
-  const [error,    setError]    = useState('')
-  const [search,   setSearch]   = useState('')
-  const [expanded, setExpanded] = useState<string | null>(null)
-  const [sortKey,  setSortKey]  = useState<SortKey>('createdAt')
-  const [sortDir,  setSortDir]  = useState<'asc' | 'desc'>('desc')
+  const [tab,          setTab]          = useState<Tab>('overview')
+  const [users,        setUsers]        = useState<UserRow[]>([])
+  const [loading,      setLoading]      = useState(true)
+  const [error,        setError]        = useState('')
+  const [search,       setSearch]       = useState('')
+  const [expanded,     setExpanded]     = useState<string | null>(null)
+  const [sortKey,      setSortKey]      = useState<SortKey>('createdAt')
+  const [sortDir,      setSortDir]      = useState<'asc' | 'desc'>('desc')
+  // ── User management ─────────────────────────────────────────────────────
+  const [showAddModal,  setShowAddModal]  = useState(false)
+  const [addForm,       setAddForm]       = useState({ fullName: '', username: '', email: '', password: '' })
+  const [addErr,        setAddErr]        = useState('')
+  const [addPending,    setAddPending]    = useState(false)
+  const [removeTarget,  setRemoveTarget]  = useState<UserRow | null>(null)
+  const [removePending, setRemovePending] = useState(false)
 
   // ── Load all data from Firestore ────────────────────────────────────────
   const load = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
-      // 1. All user profiles
-      const userSnap = await getDocs(collection(db, 'users'))
-      const rawUsers = userSnap.docs.map(d => d.data() as User)
+      // Diagnostic: log the current auth state
+      const fbUser = auth.currentUser
+      console.log('[Admin] currentUser uid:', fbUser?.uid, 'email:', fbUser?.email, 'emailVerified:', fbUser?.emailVerified)
 
-      // 2. All game records across all users via collectionGroup
-      const gameSnap = await getDocs(collectionGroup(db, 'gameHistory'))
-      const gamesByUser = new Map<string, GameRecord[]>()
-      gameSnap.docs.forEach(d => {
-        const uid = d.ref.parent.parent?.id ?? ''
-        const arr = gamesByUser.get(uid) ?? []
-        arr.push(d.data() as GameRecord)
-        gamesByUser.set(uid, arr)
-      })
+      if (!fbUser) {
+        setError('Not authenticated — Firebase Auth has no current user. Try signing out and back in.')
+        setLoading(false)
+        return
+      }
+
+      // 1. All user profiles
+      console.log('[Admin] Fetching users collection...')
+      const userSnap = await getDocs(collection(db, 'users'))
+      const rawUsers = userSnap.docs
+        .map(d => d.data() as User)
+        .filter(u => u.email !== 'admin@dragscape.com')  // exclude admin account itself
+      console.log('[Admin] users docs returned:', rawUsers.length, rawUsers.map(u => u.email))
+
+      if (rawUsers.length === 0) {
+        setError(
+          'No student accounts found in Firestore yet.\n\n' +
+          'This happens when users registered before the Firestore security rules were first deployed.\n\n' +
+          'Fix: each existing user needs to sign out and sign back in once — ' +
+          'the app will automatically recreate their profile in Firestore.\n\n' +
+          `(Admin UID: ${fbUser.uid} · Rules are deployed correctly)`
+        )
+        setLoading(false)
+        return
+      }
+
+      // 2. Game history for every user — parallel fetches.
+      console.log('[Admin] Fetching gameHistory for', rawUsers.length, 'users...')
+      const historySnaps = await Promise.all(
+        rawUsers.map(u =>
+          getDocs(collection(db, 'users', u.id, 'gameHistoryV2'))
+        )
+      )
 
       // 3. Enrich each user with their stats
-      const enriched: UserRow[] = rawUsers.map(u => {
-        const history = (gamesByUser.get(u.id) ?? []).sort(
-          (a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime()
-        )
+      const validDims = new Set<string>(DIMS)
+      const enriched: UserRow[] = rawUsers.map((u, i) => {
+        const history = historySnaps[i].docs
+          .map(d => d.data() as GameRecord)
+          .filter(g =>
+            Array.isArray(g.dimScores) &&
+            g.dimScores.length === 1 &&
+            validDims.has(g.dimScores[0].dimension) &&
+            g.total === 10
+          )
+          .sort((a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime())
+        console.log(`[Admin]   ${u.email}: ${history.length} valid V2 game(s)`)
         return {
           ...u,
           history,
@@ -215,9 +253,18 @@ export default function AdminDashboard() {
         }
       })
 
+      console.log('[Admin] Total enriched users:', enriched.length, 'Total games:', enriched.reduce((s, u) => s + u.gamesPlayed, 0))
       setUsers(enriched)
-    } catch {
-      setError('Failed to load data. Ensure Firestore rules allow admin reads (see file header).')
+    } catch (err) {
+      console.error('[AdminDashboard] Firestore load error:', err)
+      const msg = (err as { message?: string }).message ?? String(err)
+      setError(
+        msg.toLowerCase().includes('permission')
+          ? `Permission denied — the Firestore rules are not granting admin access. ` +
+            `Make sure the rules are deployed (firebase deploy --only firestore:rules). ` +
+            `UID: ${auth.currentUser?.uid ?? 'null'}. Error: ${msg}`
+          : `Failed to load data: ${msg}`
+      )
     } finally {
       setLoading(false)
     }
@@ -244,18 +291,6 @@ export default function AdminDashboard() {
     SCORE_RANGES.map(r => {
       const count = allGames.filter(g => g.pct >= r.min && g.pct <= r.max).length
       return { ...r, count, share: allGames.length ? Math.round(count / allGames.length * 100) : 0 }
-    }),
-  [allGames])
-
-  const diffBreak = useMemo(() =>
-    (['easy', 'medium', 'hard'] as Difficulty[]).map(d => {
-      const gs = allGames.filter(g => g.difficulty === d)
-      return {
-        d,
-        count: gs.length,
-        avg:   gs.length ? Math.round(gs.reduce((s, g) => s + g.pct, 0) / gs.length) : 0,
-        pass:  gs.length ? Math.round(gs.filter(g => g.pct >= 75).length / gs.length * 100) : 0,
-      }
     }),
   [allGames])
 
@@ -311,6 +346,58 @@ export default function AdminDashboard() {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
     else { setSortKey(key); setSortDir('desc') }
   }
+
+  const handleAddUser = useCallback(async () => {
+    setAddErr('')
+    const { fullName, username, email, password } = addForm
+    if (!fullName.trim() || !username.trim() || !email.trim() || !password.trim()) {
+      setAddErr('All fields are required.')
+      return
+    }
+    setAddPending(true)
+    try {
+      const secondaryApp = initializeApp(firebaseConfig, `adm-add-${Date.now()}`)
+      const secondaryAuth = getFirebaseAuth(secondaryApp)
+      const cred = await createUserWithEmailAndPassword(secondaryAuth, email.trim(), password)
+      await setDoc(doc(db, 'users', cred.user.uid), {
+        id:        cred.user.uid,
+        fullName:  fullName.trim(),
+        username:  username.trim().toLowerCase(),
+        email:     email.trim().toLowerCase(),
+        createdAt: new Date().toISOString(),
+      })
+      await deleteApp(secondaryApp)
+      setShowAddModal(false)
+      setAddForm({ fullName: '', username: '', email: '', password: '' })
+      await load()
+    } catch (err) {
+      const msg = (err as { message?: string }).message ?? String(err)
+      setAddErr(msg.replace('Firebase: ', '').replace(/\s*\(auth\/.*?\)/, ''))
+    } finally {
+      setAddPending(false)
+    }
+  }, [addForm, load])
+
+  const handleRemoveUser = useCallback(async (u: UserRow) => {
+    setRemovePending(true)
+    try {
+      const [histSnap, histV2Snap] = await Promise.all([
+        getDocs(collection(db, 'users', u.id, 'gameHistory')),
+        getDocs(collection(db, 'users', u.id, 'gameHistoryV2')),
+      ])
+      const batch = writeBatch(db)
+      histSnap.docs.forEach(d => batch.delete(d.ref))
+      histV2Snap.docs.forEach(d => batch.delete(d.ref))
+      batch.delete(doc(db, 'users', u.id))
+      await batch.commit()
+      setRemoveTarget(null)
+      await load()
+    } catch (err) {
+      console.error('[Admin] Remove user error:', err)
+    } finally {
+      setRemovePending(false)
+    }
+  }, [load])
 
   const NAV: [Tab, string, typeof TrendingUp][] = [
     ['overview', 'Overview', TrendingUp],
@@ -386,7 +473,7 @@ export default function AdminDashboard() {
         </div>
 
         {error && (
-          <div className="adm-alert">
+          <div className="adm-alert" style={{ whiteSpace: 'pre-line' }}>
             <AlertTriangle size={14} />
             {error}
           </div>
@@ -494,7 +581,7 @@ export default function AdminDashboard() {
 
                 {/* Top Performers */}
                 <div className="adm-card">
-                  <h3 className="adm-card-title">🏆 Top Performers</h3>
+                  <h3 className="adm-card-title">Top Performers</h3>
                   <div className="adm-top-list">
                     {[...users]
                       .filter(u => u.gamesPlayed > 0)
@@ -521,36 +608,36 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Difficulty Breakdown */}
+                {/* Dimension Summary */}
                 <div className="adm-card">
-                  <h3 className="adm-card-title">By Difficulty Level</h3>
-                  <div className="adm-diff-grid">
-                    {diffBreak.map(d => (
-                      <div
-                        key={d.d}
-                        className="adm-diff-cell"
-                        style={{ '--dc': DIFF_META[d.d].color } as CSSProperties}
-                      >
-                        <span className="adm-diff-emoji">
-                          {d.d === 'easy' ? '⚡' : d.d === 'medium' ? '🔥' : '👑'}
-                        </span>
-                        <span className="adm-diff-label">{DIFF_META[d.d].label}</span>
-                        <span className="adm-diff-count">{d.count} sessions</span>
-                        <span className="adm-diff-avg">{d.avg}% avg</span>
-                        <div className="adm-bar-track" style={{ marginTop: 6 }}>
-                          <div className="adm-bar-fill" style={{ width: `${d.avg}%`, background: DIFF_META[d.d].color }} />
+                  <h3 className="adm-card-title">Dimension Scores</h3>
+                  <div className="adm-dist-list">
+                    {dimPerf.map(d => {
+                      const Icon = DIM_ICONS[d.dim]
+                      return (
+                        <div key={d.dim} className="adm-dist-row">
+                          <div className="adm-dist-meta">
+                            <Icon size={12} style={{ color: DIM_COLORS[d.dim], flexShrink: 0 }} />
+                            <span className="adm-dist-label" style={{ fontSize: '0.78rem' }}>{d.dim}</span>
+                          </div>
+                          <div className="adm-bar-wrap">
+                            <BarFill pct={d.pct} color={DIM_COLORS[d.dim]} />
+                            <span className="adm-dist-count">
+                              {d.pct}% <small>({d.correct}/{d.total})</small>
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
 
                 {/* Non-participants */}
                 <div className="adm-card">
-                  <h3 className="adm-card-title">⚠️ Haven't Played Yet</h3>
+                  <h3 className="adm-card-title">Haven't Played Yet</h3>
                   <div className="adm-noplay-list">
                     {users.filter(u => u.gamesPlayed === 0).length === 0
-                      ? <p className="adm-empty">All users have played at least once. 🎉</p>
+                      ? <p className="adm-empty">All users have played at least once.</p>
                       : users.filter(u => u.gamesPlayed === 0).map(u => (
                           <div key={u.id} className="adm-noplay-row">
                             <div className="adm-top-info">
@@ -582,6 +669,10 @@ export default function AdminDashboard() {
                     />
                   </div>
                   <span className="adm-count-badge">{filteredUsers.length} user{filteredUsers.length !== 1 ? 's' : ''}</span>
+                  <button className="adm-add-user-btn" onClick={() => { setShowAddModal(true); setAddErr('') }}>
+                    <UserPlus size={14} />
+                    Add User
+                  </button>
                 </div>
 
                 <div className="adm-table-wrap">
@@ -604,6 +695,7 @@ export default function AdminDashboard() {
                           </th>
                         ))}
                         <th className="adm-th">History</th>
+                        <th className="adm-th">Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -651,11 +743,20 @@ export default function AdminDashboard() {
                                   : <ChevronRight size={14} />}
                               </button>
                             </td>
+                            <td className="adm-td adm-td--center">
+                              <button
+                                className="adm-remove-btn"
+                                onClick={() => setRemoveTarget(u)}
+                                title="Remove user"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </td>
                           </tr>
 
                           {expanded === u.id && (
                             <tr className="adm-detail-row">
-                              <td colSpan={7} className="adm-detail-td">
+                              <td colSpan={8} className="adm-detail-td">
                                 <div className="adm-inner-wrap">
                                   <p className="adm-inner-title">
                                     Game history for <strong>{u.fullName}</strong> — {u.history.length} session{u.history.length !== 1 ? 's' : ''}
@@ -666,7 +767,7 @@ export default function AdminDashboard() {
                                         <tr>
                                           <th>#</th>
                                           <th>Date & Time</th>
-                                          <th>Difficulty</th>
+                                          <th>Dimension</th>
                                           <th>Score</th>
                                           <th>%</th>
                                           <th>Descriptor</th>
@@ -684,9 +785,11 @@ export default function AdminDashboard() {
                                               <td>{gi + 1}</td>
                                               <td style={{ whiteSpace: 'nowrap' }}>{fmt(g.playedAt)}</td>
                                               <td>
-                                                <span style={{ color: DIFF_META[g.difficulty].color, fontWeight: 600 }}>
-                                                  {g.difficulty.charAt(0).toUpperCase() + g.difficulty.slice(1)}
-                                                </span>
+                                                {g.dimScores?.length
+                                                  ? <span style={{ color: DIM_COLORS[g.dimScores[0].dimension], fontWeight: 600, fontSize: '0.76rem' }}>
+                                                      {g.dimScores[0].dimension}
+                                                    </span>
+                                                  : <span className="adm-na">—</span>}
                                               </td>
                                               <td style={{ fontWeight: 700 }}>{g.score}/{g.total}</td>
                                               <td style={{ color: desc.color, fontWeight: 800 }}>{g.pct}%</td>
@@ -705,6 +808,53 @@ export default function AdminDashboard() {
                                       </tbody>
                                     </table>
                                   </div>
+                                  {/* Dimension Averages */}
+                                  {(() => {
+                                    const dimAvgs = DIMS.map(dim => {
+                                      const sessions = u.history.filter(g => g.dimScores?.[0]?.dimension === dim)
+                                      if (!sessions.length) return null
+                                      const avgPct     = Math.round(sessions.reduce((s, g) => s + g.pct, 0) / sessions.length)
+                                      const totCorrect = sessions.reduce((s, g) => s + g.dimScores[0].correct, 0)
+                                      const totTotal   = sessions.reduce((s, g) => s + g.dimScores[0].total,   0)
+                                      return {
+                                        dim,
+                                        count:      sessions.length,
+                                        avgCorrect: (totCorrect / sessions.length).toFixed(1),
+                                        avgTotal:   (totTotal   / sessions.length).toFixed(1),
+                                        avgPct,
+                                      }
+                                    }).filter(Boolean) as { dim: Dimension; count: number; avgCorrect: string; avgTotal: string; avgPct: number }[]
+                                    if (!dimAvgs.length) return null
+                                    return (
+                                      <div className="adm-dim-avg-wrap">
+                                        <p className="adm-inner-title" style={{ marginBottom: '0.5rem' }}>Dimension Averages</p>
+                                        <div className="adm-inner-scroll">
+                                          <table className="adm-inner-table">
+                                            <thead>
+                                              <tr>
+                                                <th>Dimension</th>
+                                                <th>Sessions</th>
+                                                <th>Avg Correct / Total</th>
+                                                <th>Avg %</th>
+                                                <th style={{ width: 120 }}>Bar</th>
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              {dimAvgs.map(d => (
+                                                <tr key={d.dim}>
+                                                  <td style={{ color: DIM_COLORS[d.dim], fontWeight: 600 }}>{d.dim}</td>
+                                                  <td>{d.count}</td>
+                                                  <td style={{ color: '#475569' }}>{d.avgCorrect} / {d.avgTotal}</td>
+                                                  <td style={{ color: getRange(d.avgPct).color, fontWeight: 700 }}>{d.avgPct}%</td>
+                                                  <td><BarFill pct={d.avgPct} color={DIM_COLORS[d.dim]} /></td>
+                                                </tr>
+                                              ))}
+                                            </tbody>
+                                          </table>
+                                        </div>
+                                      </div>
+                                    )
+                                  })()}
                                 </div>
                               </td>
                             </tr>
@@ -714,7 +864,7 @@ export default function AdminDashboard() {
 
                       {filteredUsers.length === 0 && (
                         <tr>
-                          <td colSpan={7} className="adm-td adm-empty">No users found.</td>
+                          <td colSpan={8} className="adm-td adm-empty">No users found.</td>
                         </tr>
                       )}
                     </tbody>
@@ -729,7 +879,7 @@ export default function AdminDashboard() {
 
                 {/* Score Distribution Table */}
                 <div className="adm-card adm-card--wide">
-                  <h3 className="adm-card-title">📊 Score Distribution — DepEd Descriptors</h3>
+                  <h3 className="adm-card-title">Score Distribution — DepEd Descriptors</h3>
                   <table className="adm-report-table">
                     <thead>
                       <tr>
@@ -763,35 +913,9 @@ export default function AdminDashboard() {
                   </table>
                 </div>
 
-                {/* Difficulty Report */}
-                <div className="adm-card">
-                  <h3 className="adm-card-title">🎮 By Difficulty Level</h3>
-                  <table className="adm-report-table">
-                    <thead>
-                      <tr><th>Difficulty</th><th>Sessions</th><th>Avg Score</th><th>Pass Rate</th><th style={{ width: 120 }}>Avg Bar</th></tr>
-                    </thead>
-                    <tbody>
-                      {diffBreak.map(d => (
-                        <tr key={d.d}>
-                          <td>
-                            <span style={{ color: DIFF_META[d.d].color, fontWeight: 700 }}>
-                              {d.d === 'easy' ? '⚡ ' : d.d === 'medium' ? '🔥 ' : '👑 '}
-                              {DIFF_META[d.d].label}
-                            </span>
-                          </td>
-                          <td>{d.count}</td>
-                          <td style={{ color: DIFF_META[d.d].color, fontWeight: 700 }}>{d.avg}%</td>
-                          <td style={{ fontWeight: 600 }}>{d.pass}%</td>
-                          <td><BarFill pct={d.avg} color={DIFF_META[d.d].color} /></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
                 {/* Dimension Report */}
                 <div className="adm-card">
-                  <h3 className="adm-card-title">📚 By Vocabulary Dimension</h3>
+                  <h3 className="adm-card-title">By Vocabulary Dimension</h3>
                   <table className="adm-report-table">
                     <thead>
                       <tr><th>Dimension</th><th>Correct / Total</th><th>Accuracy</th><th style={{ width: 120 }}>Bar</th></tr>
@@ -813,7 +937,7 @@ export default function AdminDashboard() {
 
                 {/* Research Summary */}
                 <div className="adm-card">
-                  <h3 className="adm-card-title">📋 Research Summary</h3>
+                  <h3 className="adm-card-title">Research Summary</h3>
                   <dl className="adm-summary-list">
                     {[
                       ['Total Respondents',          String(kpis.totalUsers)],
@@ -877,7 +1001,7 @@ export default function AdminDashboard() {
                         'Registered At',
                         'Game # (session number per user)',
                         'Played At (ISO timestamp)',
-                        'Difficulty (easy / medium / hard)',
+                        'Dimension (Word Recognition / Meaning Identification / Context Comprehension / Word Form)',
                         'Score (correct answers)',
                         'Total Questions',
                         'Percentage (%)',
@@ -905,6 +1029,74 @@ export default function AdminDashboard() {
           </div>
         )}
       </main>
+
+      {/* ── Add User Modal ── */}
+      {showAddModal && (
+        <div className="adm-modal-overlay" onClick={() => !addPending && setShowAddModal(false)}>
+          <div className="adm-modal" onClick={e => e.stopPropagation()}>
+            <div className="adm-modal-header">
+              <h3>Add New User</h3>
+              <button className="adm-modal-close" onClick={() => setShowAddModal(false)} disabled={addPending}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className="adm-modal-body">
+              {addErr && <div className="adm-modal-err">{addErr}</div>}
+              {([
+                { key: 'fullName', label: 'Full Name', placeholder: 'e.g. Juan Dela Cruz',  type: 'text'     },
+                { key: 'username', label: 'Username',  placeholder: 'e.g. jdelacruz',       type: 'text'     },
+                { key: 'email',    label: 'Email',     placeholder: 'e.g. juan@email.com',  type: 'email'    },
+                { key: 'password', label: 'Password',  placeholder: 'Min 6 characters',     type: 'password' },
+              ] as { key: keyof typeof addForm; label: string; placeholder: string; type: string }[]).map(f => (
+                <label key={f.key} className="adm-modal-label">
+                  <span>{f.label}</span>
+                  <input
+                    className="adm-modal-input"
+                    type={f.type}
+                    placeholder={f.placeholder}
+                    value={addForm[f.key]}
+                    onChange={e => setAddForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                    disabled={addPending}
+                  />
+                </label>
+              ))}
+            </div>
+            <div className="adm-modal-footer">
+              <button className="adm-modal-cancel" onClick={() => setShowAddModal(false)} disabled={addPending}>Cancel</button>
+              <button className="adm-modal-submit" onClick={handleAddUser} disabled={addPending}>
+                {addPending ? 'Creating…' : 'Create User'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Remove User Confirmation ── */}
+      {removeTarget && (
+        <div className="adm-modal-overlay" onClick={() => !removePending && setRemoveTarget(null)}>
+          <div className="adm-modal adm-modal--sm" onClick={e => e.stopPropagation()}>
+            <div className="adm-modal-header">
+              <h3>Remove User</h3>
+              <button className="adm-modal-close" onClick={() => setRemoveTarget(null)} disabled={removePending}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className="adm-modal-body">
+              <p className="adm-modal-confirm-text">
+                Remove <strong>{removeTarget.fullName}</strong>? This will permanently delete
+                all their Firestore data including game history. Their Firebase Auth account
+                must be removed separately via the Firebase Console.
+              </p>
+            </div>
+            <div className="adm-modal-footer">
+              <button className="adm-modal-cancel" onClick={() => setRemoveTarget(null)} disabled={removePending}>Cancel</button>
+              <button className="adm-modal-danger" onClick={() => handleRemoveUser(removeTarget)} disabled={removePending}>
+                {removePending ? 'Removing…' : 'Remove User'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -8,17 +8,18 @@ service cloud.firestore {
     }
     function isAdmin() {
       return isSignedIn()
-          && request.auth.token.email == 'admin@dragscape.com';
+          && (
+               request.auth.uid == 'thrco5dFrbgsoH8rh94agFKdyVD2'
+            || request.auth.token.email == 'admin@dragscape.com'
+          );
     }
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // ── Admin: full read access to every document ──────────────────────────
-    // Covers both direct reads and collectionGroup queries (/{document=**}
-    // is a recursive wildcard that matches all document paths).
+    // ── Admin: full read and write access to every document ──────────────
     match /{document=**} {
-      allow read: if isAdmin();
+      allow read, write: if isAdmin();
     }
 
     // ── Admin: explicit collectionGroup support for gameHistory ────────────
@@ -26,7 +27,7 @@ service cloud.firestore {
     // This allows the admin dashboard to run:
     //   getDocs(collectionGroup(db, 'gameHistory'))
     match /{path=**}/gameHistory/{gameId} {
-      allow read: if isAdmin();
+      allow read, write: if isAdmin();
     }
 
     // ── Regular users: own profile document ───────────────────────────────
@@ -34,8 +35,12 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
-    // ── Regular users: own game history sub-collection ────────────────────
+    // ── Regular users: own game history sub-collections ────────────────────
     match /users/{userId}/gameHistory/{gameId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /users/{userId}/gameHistoryV2/{gameId} {
       allow read, write: if isOwner(userId);
     }
   }

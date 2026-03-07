@@ -33,14 +33,6 @@ function dimColors(dim: 'wr' | 'mi' | 'cc' | 'wf', diff: Difficulty) {
   return map[dim][diff]
 }
 
-// ─── Difficulty from word length: ≤6 = easy | 7-9 = medium | ≥10 = hard ────────
-function diffByLength(word: string): Difficulty {
-  const len = word.length
-  if (len <= 6) return 'easy'
-  if (len <= 9) return 'medium'
-  return 'hard'
-}
-
 // ─── Seeded Fisher-Yates shuffle – deterministic scramble per level number ──────
 function scramble(word: string, seed: number): string[] {
   const arr = word.split('')
@@ -75,7 +67,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('wr', 'easy').bg,
     letters: ['G', 'N', 'I', 'V', 'R', 'A', 'T', 'S'],
     targetWord: 'STARVING',
-    hint: 'Extremely hungry',
+    hint: 'Like missing breakfast, lunch, and dinner all at once',
     mcqQuestion: 'Anna skipped breakfast and lunch. By dinner time, her stomach was growling loudly. Which word best describes Anna\'s feeling?',
     choices: [
       { id: 'A', text: 'Tired' },
@@ -94,7 +86,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('wr', 'easy').bg,
     letters: ['T', 'N', 'E', 'I', 'C', 'N', 'A'],
     targetWord: 'ANCIENT',
-    hint: 'Very old',
+    hint: 'Dinosaurs and pyramids belong to these times',
     mcqQuestion: 'The teacher showed a photograph of a stone building built thousands of years ago. Which word best describes it?',
     choices: [
       { id: 'A', text: 'Very old' },
@@ -113,7 +105,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('wr', 'easy').bg,
     letters: ['O', 'C', 'U', 'R', 'A', 'G', 'E', 'O', 'U', 'S'],
     targetWord: 'COURAGEOUS',
-    hint: 'Brave despite fear',
+    hint: 'A firefighter running into a burning building shows this',
     mcqQuestion: 'Marco helped guide younger students during an earthquake drill even though he was scared. Which word best describes him?',
     choices: [
       { id: 'A', text: 'Coward' },
@@ -132,7 +124,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('wr', 'easy').bg,
     letters: ['H', 'U', 'G', 'E'],
     targetWord: 'HUGE',
-    hint: 'Extremely large',
+    hint: 'Think of a blue whale, a cargo ship, or a skyscraper',
     mcqQuestion: 'The billboard covered the entire side of a five-story building. Which word best describes it?',
     choices: [
       { id: 'A', text: 'Very tiny' },
@@ -153,7 +145,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('wr', 'medium').bg,
     letters: ['E', 'X', 'A', 'M', 'I', 'N', 'E'],
     targetWord: 'EXAMINE',
-    hint: 'To look closely at something',
+    hint: 'What a doctor does with a stethoscope and flashlight',
     mcqQuestion: 'The science teacher carefully checked every measurement and observation. Which word best describes what she did?',
     choices: [
       { id: 'A', text: 'Ignore' },
@@ -172,7 +164,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('wr', 'medium').bg,
     letters: ['T', 'R', 'A', 'N', 'S', 'P', 'A', 'R', 'E', 'N', 'T'],
     targetWord: 'TRANSPARENT',
-    hint: 'Allowing light to pass through',
+    hint: 'Glass windows and clear plastic wrap have this property',
     mcqQuestion: 'The stage curtain let the audience see the shadows of actors. Which word best describes it?',
     choices: [
       { id: 'A', text: 'Can be heard' },
@@ -191,7 +183,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('wr', 'medium').bg,
     letters: ['A', 'N', 'N', 'U', 'A', 'L'],
     targetWord: 'ANNUAL',
-    hint: 'Happening once a year',
+    hint: 'Birthdays, Christmas, and New Year all happen on this schedule',
     mcqQuestion: 'Every December 25, the Reyes family gathers for a reunion — without fail for 20 years. How often does this happen?',
     choices: [
       { id: 'A', text: 'Daily' },
@@ -212,7 +204,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('wr', 'hard').bg,
     letters: ['R', 'A', 'P', 'I', 'D'],
     targetWord: 'RAPID',
-    hint: 'Moving at high speed',
+    hint: 'Lightning, a cheetah, and a bullet train all share this quality',
     mcqQuestion: 'The ambulance driver turned on the siren and drove through traffic at full speed. Which word describes the ambulance?',
     choices: [
       { id: 'A', text: 'Very slow' },
@@ -231,7 +223,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('wr', 'hard').bg,
     letters: ['I', 'M', 'P', 'R', 'O', 'V', 'E'],
     targetWord: 'IMPROVE',
-    hint: 'To make better',
+    hint: 'What practice and feedback do to a skill over time',
     mcqQuestion: 'The school added after-school tutoring to boost struggling students\' grades. What was the program meant to do?',
     choices: [
       { id: 'A', text: 'Worsen' },
@@ -250,7 +242,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('wr', 'hard').bg,
     letters: ['G', 'E', 'N', 'E', 'R', 'O', 'U', 'S'],
     targetWord: 'GENEROUS',
-    hint: 'Willing to give freely',
+    hint: 'Someone who shares the last piece of food without hesitation',
     mcqQuestion: 'Mang Danny donated 50 bags of rice and 100 cans of goods during typhoon relief. Which word best describes him?',
     choices: [
       { id: 'A', text: 'Selfish' },
@@ -275,7 +267,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('mi', 'easy').bg,
     letters: ['N', 'O', 'D', 'N', 'A', 'B', 'A'],
     targetWord: 'ABANDON',
-    hint: 'To leave behind permanently',
+    hint: 'A captain is the last to do this to a sinking ship',
     mcqQuestion: 'Pedro left his old bicycle behind when his family moved. He never went back to get it. Which meaning best fits?',
     choices: [
       { id: 'A', text: 'To leave behind permanently' },
@@ -294,7 +286,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('mi', 'easy').bg,
     letters: ['B', 'R', 'I', 'L', 'L', 'I', 'A', 'N', 'T'],
     targetWord: 'BRILLIANT',
-    hint: 'Very bright or intelligent',
+    hint: 'Einstein, Rizal, and Marie Curie were all described this way',
     mcqQuestion: 'Sarah\'s science fair idea was so creative and well-researched that her teacher called it outstanding. Which meaning fits?',
     choices: [
       { id: 'A', text: 'Very dull and dark' },
@@ -313,7 +305,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('mi', 'easy').bg,
     letters: ['C', 'A', 'U', 'T', 'I', 'O', 'U', 'S'],
     targetWord: 'CAUTIOUS',
-    hint: 'Careful and alert',
+    hint: 'How you should move near a sleeping dog or on a slippery floor',
     mcqQuestion: 'Ben looked left and right three times and waited for a green light before crossing. Which meaning best describes Ben?',
     choices: [
       { id: 'A', text: 'Careless and reckless' },
@@ -334,7 +326,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('mi', 'medium').bg,
     letters: ['F', 'R', 'A', 'G', 'I', 'L', 'E'],
     targetWord: 'FRAGILE',
-    hint: 'Easily broken',
+    hint: 'The word printed on delivery boxes with a wine glass icon',
     mcqQuestion: 'The antique glass vase was placed inside a locked cabinet because even a slight bump could shatter it. Which meaning fits?',
     choices: [
       { id: 'A', text: 'Strong and tough' },
@@ -353,7 +345,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('mi', 'medium').bg,
     letters: ['E', 'V', 'I', 'D', 'E', 'N', 'C', 'E'],
     targetWord: 'EVIDENCE',
-    hint: 'Something that proves or disproves',
+    hint: 'What Sherlock Holmes always hunts for at the scene',
     mcqQuestion: 'The detective found a footprint, torn cloth, and a recorded video that all pointed to the same suspect. What were those items?',
     choices: [
       { id: 'A', text: 'Something that proves or disproves' },
@@ -372,7 +364,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('mi', 'medium').bg,
     letters: ['F', 'R', 'E', 'Q', 'U', 'E', 'N', 'T'],
     targetWord: 'FREQUENT',
-    hint: 'Happening often',
+    hint: 'Philippine rain in July falls this often',
     mcqQuestion: 'The school canteen runs out of rice every single day. Which meaning best describes how often it happens?',
     choices: [
       { id: 'A', text: 'Happening rarely' },
@@ -391,7 +383,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('mi', 'medium').bg,
     letters: ['N', 'U', 'I', 'E', 'G', 'N', 'E'],
     targetWord: 'GENUINE',
-    hint: 'Real or authentic',
+    hint: 'The opposite of counterfeit, fake, or imitation',
     mcqQuestion: 'The seller showed a receipt and official certificate proving the bag was made in Italy. Which meaning fits?',
     choices: [
       { id: 'A', text: 'Fake or false' },
@@ -412,7 +404,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('mi', 'hard').bg,
     letters: ['H', 'A', 'R', 'S', 'H'],
     targetWord: 'HARSH',
-    hint: 'Rough or severe',
+    hint: 'Bitter medicine, freezing wind, and strict scolding all feel this way',
     mcqQuestion: 'The principal used a strict and firm tone when reminding students about bullying consequences. Which meaning fits?',
     choices: [
       { id: 'A', text: 'Gentle and soft' },
@@ -431,7 +423,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('mi', 'hard').bg,
     letters: ['I', 'L', 'L', 'U', 'M', 'I', 'N', 'A', 'T', 'E'],
     targetWord: 'ILLUMINATE',
-    hint: 'To make bright',
+    hint: 'What a lighthouse does for ships lost in the dark',
     mcqQuestion: 'The barangay placed solar-powered streetlights along a dark alley so residents could walk safely. What did the lights do?',
     choices: [
       { id: 'A', text: 'To make dark' },
@@ -450,7 +442,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('mi', 'hard').bg,
     letters: ['J', 'O', 'Y', 'F', 'U', 'L'],
     targetWord: 'JOYFUL',
-    hint: 'Full of happiness',
+    hint: 'The look on a child\'s face on Christmas morning',
     mcqQuestion: 'The students cheered, laughed, and danced during the school foundation day. Which meaning best describes their mood?',
     choices: [
       { id: 'A', text: 'Full of sadness' },
@@ -475,7 +467,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('cc', 'easy').bg,
     letters: ['C', 'O', 'N', 'F', 'I', 'D', 'E', 'N', 'T'],
     targetWord: 'CONFIDENT',
-    hint: 'Fill in the blank: "Clara was _____ about the test."',
+    hint: 'How you feel after thoroughly preparing for something',
     mcqQuestion: 'Clara spent two weeks reviewing. She was __________ about the test because she studied very hard.',
     choices: [
       { id: 'A', text: 'Worried' },
@@ -494,7 +486,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('cc', 'easy').bg,
     letters: ['I', 'D', 'E', 'N', 'T', 'I', 'F', 'Y'],
     targetWord: 'IDENTIFY',
-    hint: 'To recognize or discover',
+    hint: 'What fingerprint analysts do to find the right suspect',
     mcqQuestion: 'The teacher asked students to read twice, then write the author\'s main message. She asked them to __________ the main idea.',
     choices: [
       { id: 'A', text: 'Forget' },
@@ -513,7 +505,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('cc', 'easy').bg,
     letters: ['E', 'X', 'H', 'A', 'U', 'S', 'T', 'E', 'D'],
     targetWord: 'EXHAUSTED',
-    hint: 'Fill in: "Maria felt _____ and needed to rest."',
+    hint: 'How a marathon runner feels at the finish line',
     mcqQuestion: 'After the 42-kilometer race, Maria could barely walk. She felt __________ and needed to rest.',
     choices: [
       { id: 'A', text: 'Energetic' },
@@ -534,7 +526,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('cc', 'medium').bg,
     letters: ['C', 'O', 'N', 'F', 'U', 'S', 'I', 'N', 'G'],
     targetWord: 'CONFUSING',
-    hint: 'Hard to understand',
+    hint: 'Assembly instructions with no pictures and lots of jargon feel this way',
     mcqQuestion: 'The worksheet used overly technical language with no examples. The __________ instructions made it difficult for students.',
     choices: [
       { id: 'A', text: 'Clear' },
@@ -553,7 +545,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('cc', 'medium').bg,
     letters: ['K', 'I', 'N', 'D', 'N', 'E', 'S', 'S'],
     targetWord: 'KINDNESS',
-    hint: 'The quality of being friendly and caring',
+    hint: 'A random act of this can brighten a stranger\'s entire day',
     mcqQuestion: 'Juan offered his umbrella to an elderly woman in the rain. He showed great __________ when he helped her.',
     choices: [
       { id: 'A', text: 'Rudeness' },
@@ -572,7 +564,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('cc', 'medium').bg,
     letters: ['D', 'I', 'S', 'C', 'O', 'V', 'E', 'R', 'Y'],
     targetWord: 'DISCOVERY',
-    hint: 'Finding something new',
+    hint: 'Fleming\'s penicillin and Newton\'s gravity are famous ones',
     mcqQuestion: 'Filipino researchers announced a new vaccine formula that could prevent a deadly disease. They made an important __________.',
     choices: [
       { id: 'A', text: 'Mistake' },
@@ -591,7 +583,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('cc', 'medium').bg,
     letters: ['D', 'I', 'F', 'F', 'I', 'C', 'U', 'L', 'T'],
     targetWord: 'DIFFICULT',
-    hint: 'Not easy; requiring great effort',
+    hint: 'Climbing Mount Everest qualifies as this kind of challenge',
     mcqQuestion: 'The mountain climbers battled freezing temperatures, thick fog, and steep cliffs. They faced many __________ challenges.',
     choices: [
       { id: 'A', text: 'Easy' },
@@ -612,7 +604,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('cc', 'hard').bg,
     letters: ['A', 'N', 'N', 'O', 'U', 'N', 'C', 'E'],
     targetWord: 'ANNOUNCE',
-    hint: 'To officially share information',
+    hint: 'What a principal does over the PA system to share news',
     mcqQuestion: 'The principal gathered students in the gymnasium to share the updated rules. The principal will __________ the new rules.',
     choices: [
       { id: 'A', text: 'Hide' },
@@ -631,7 +623,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('cc', 'hard').bg,
     letters: ['B', 'E', 'A', 'U', 'T', 'I', 'F', 'U', 'L'],
     targetWord: 'BEAUTIFUL',
-    hint: 'Very pleasing to look at',
+    hint: 'A sunset over the ocean is almost always described this way',
     mcqQuestion: 'Visitors stopped and gathered in front of one painting — some took photos of how stunning it was. The painting was so __________.',
     choices: [
       { id: 'A', text: 'Ugly' },
@@ -650,7 +642,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('cc', 'hard').bg,
     letters: ['U', 'T', 'I', 'L', 'I', 'Z', 'E'],
     targetWord: 'UTILIZE',
-    hint: 'To make practical use of something',
+    hint: 'What a skilled engineer does even with limited tools and materials',
     mcqQuestion: 'The guidance office had limited funds and supplies, so they planned carefully. We need to __________ our resources wisely.',
     choices: [
       { id: 'A', text: 'Waste' },
@@ -675,7 +667,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('wf', 'easy').bg,
     letters: ['E', 'X', 'P', 'L', 'A', 'N', 'A', 'T', 'I', 'O', 'N'],
     targetWord: 'EXPLANATION',
-    hint: 'Choose the correctly spelled form',
+    hint: 'Noun from \'explain\' — watch how the spelling shifts before -ation',
     mcqQuestion: 'The teacher solved the problem step by step and gave the students a detailed __________.',
     choices: [
       { id: 'A', text: 'Explaintion' },
@@ -694,7 +686,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('wf', 'easy').bg,
     letters: ['H', 'A', 'P', 'P', 'I', 'N', 'E', 'S', 'S'],
     targetWord: 'HAPPINESS',
-    hint: 'Choose the correctly spelled form',
+    hint: 'When \'happy\' becomes a noun, the Y changes to I before -ness',
     mcqQuestion: 'Maria trained every day and finally won the championship. She was filled with __________.',
     choices: [
       { id: 'A', text: 'Happyness' },
@@ -713,7 +705,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('wf', 'easy').bg,
     letters: ['D', 'E', 'T', 'E', 'R', 'M', 'I', 'N', 'A', 'T', 'I', 'O', 'N'],
     targetWord: 'DETERMINATION',
-    hint: 'Choose the correctly spelled form',
+    hint: 'Noun from \'determine\' — the final E is dropped before -ation',
     mcqQuestion: 'After failing the qualifying exam twice, the student refused to give up. Everyone admired her __________.',
     choices: [
       { id: 'A', text: 'Determinasion' },
@@ -734,7 +726,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('wf', 'medium').bg,
     letters: ['N', 'E', 'C', 'E', 'S', 'S', 'A', 'R', 'Y'],
     targetWord: 'NECESSARY',
-    hint: 'Choose the correctly spelled form',
+    hint: 'One collar, two socks — remember: one C but two S\'s',
     mcqQuestion: 'The school handbook states that it is __________ for students to wear their complete uniform every day.',
     choices: [
       { id: 'A', text: 'Nessesary' },
@@ -753,7 +745,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('wf', 'medium').bg,
     letters: ['E', 'D', 'U', 'C', 'A', 'T', 'I', 'O', 'N', 'A', 'L'],
     targetWord: 'EDUCATIONAL',
-    hint: 'Choose the correct word form (adjective)',
+    hint: 'Add -al to the noun \'education\' to get this adjective',
     mcqQuestion: 'The field trip to the science museum was very __________ because students saw real exhibits from their lessons.',
     choices: [
       { id: 'A', text: 'Education' },
@@ -772,7 +764,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('wf', 'medium').bg,
     letters: ['C', 'L', 'O', 'S', 'E', 'D'],
     targetWord: 'CLOSED',
-    hint: 'Choose the correct word form',
+    hint: 'Past participle of \'close\' — describes the current state of a door or shop',
     mcqQuestion: 'The students arrived at the library on Saturday but found that it was __________ for the day.',
     choices: [
       { id: 'A', text: 'Close' },
@@ -791,7 +783,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('wf', 'medium').bg,
     letters: ['C', 'L', 'E', 'A', 'R', 'L', 'Y'],
     targetWord: 'CLEARLY',
-    hint: 'Choose the correct word form (adverb)',
+    hint: 'Add -ly to the adjective to describe how an action is performed',
     mcqQuestion: 'During the speech choir, the lead speaker projected her voice so __________ that everyone could hear.',
     choices: [
       { id: 'A', text: 'Clear' },
@@ -812,7 +804,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('wf', 'hard').bg,
     letters: ['S', 'A', 'T', 'I', 'S', 'F', 'I', 'E', 'D'],
     targetWord: 'SATISFIED',
-    hint: 'Choose the correct word form',
+    hint: 'Past participle of \'satisfy\' — describes how someone feels, not the action itself',
     mcqQuestion: 'The manager received the project report and was __________ with how efficiently the team completed all tasks.',
     choices: [
       { id: 'A', text: 'Satisfy' },
@@ -831,7 +823,7 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('wf', 'hard').bg,
     letters: ['U', 'N', 'D', 'E', 'R', 'S', 'T', 'A', 'N', 'D'],
     targetWord: 'UNDERSTAND',
-    hint: 'Choose the correct word form',
+    hint: 'After modal verbs like \'would\' or \'can\', always use the base verb form',
     mcqQuestion: 'Before the competition, the coach gathered the players to make sure everyone would __________ the official game mechanics.',
     choices: [
       { id: 'A', text: 'Understand' },
@@ -850,8 +842,8 @@ export const ALL_LEVELS: Level[] = [
     bgColor: dimColors('wf', 'hard').bg,
     letters: ['F', 'R', 'I', 'G', 'H', 'T', 'E', 'N', 'E', 'D'],
     targetWord: 'FRIGHTENED',
-    hint: 'Choose the correct word form',
-    mcqQuestion: 'During the storm, a loud thunderclap shook the windows. The little girl was __________ by the sound.',
+    hint: 'Describes the person who feels the emotion, not the thing causing it',
+    mcqQuestion: 'During the storm, a loud thunderclap shook the windows. The little girl was __________ by the sound?',
     choices: [
       { id: 'A', text: 'Frighten' },
       { id: 'B', text: 'Frightened' },
@@ -863,21 +855,10 @@ export const ALL_LEVELS: Level[] = [
   },
 ]
 
-// ─── Auto-apply word-length difficulty + matching colors + scrambled letters ────
-;(function applyWordLengthSettings() {
-  const dimKey: Record<string, 'wr' | 'mi' | 'cc' | 'wf'> = {
-    'Word Recognition':       'wr',
-    'Meaning Identification':  'mi',
-    'Context Comprehension':   'cc',
-    'Word Form':               'wf',
-  }
+// ─── Auto-apply scrambled letters only (difficulty + colors stay as authored) ──
+;(function applyScramble() {
   ALL_LEVELS.forEach(level => {
-    const diff = diffByLength(level.targetWord)
-    const dk   = dimKey[level.dimension]
-    level.difficulty  = diff
-    level.accentColor = dimColors(dk, diff).accent
-    level.bgColor     = dimColors(dk, diff).bg
-    level.letters     = scramble(level.targetWord, level.number)
+    level.letters = scramble(level.targetWord, level.number)
   })
 })()
 
@@ -888,4 +869,15 @@ export function getLevelsByDifficulty(difficulty: Difficulty): Level[] {
 
 // Legacy export for compatibility
 export const LEVELS = ALL_LEVELS
+
+// ─── Dev-time validation: every level must have a non-empty hint ─────────────
+if (import.meta.env.DEV) {
+  ALL_LEVELS.forEach(level => {
+    if (!level.hint?.trim()) {
+      console.warn(
+        `[Dragscape] Level ${level.number} "${level.targetWord}" is missing a hint!`
+      )
+    }
+  })
+}
 

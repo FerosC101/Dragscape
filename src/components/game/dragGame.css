@@ -141,8 +141,9 @@
 }
 
 .ds-slot {
-  flex: 0 0 auto;
-  width:  clamp(28px, calc((min(430px, 100vw) - 2.5rem) / var(--wl) - 6px), 46px);
+  flex: 1 1 0;
+  min-width: 24px;
+  max-width: clamp(28px, calc((min(430px, 100vw) - 2.5rem) / var(--wl) - 6px), 52px);
   height: clamp(34px, 7.5vw, 52px);
   border-radius: 10px;
   background: rgba(255,255,255,0.93);
@@ -335,7 +336,7 @@
   position: relative;
   z-index: 20;
   padding: 0.6rem 1rem 0.9rem;
-  display: flex; justify-content: center;
+  display: flex; justify-content: center; gap: 0.75rem;
 }
 
 .ds-clear-btn {
@@ -354,6 +355,40 @@
 }
 .ds-clear-btn:not(:disabled):hover { background: rgba(255,255,255,0.33); }
 .ds-clear-btn:disabled { opacity: 0.38; cursor: default; }
+
+.ds-shuffle-btn {
+  display: flex; align-items: center; gap: 0.4rem;
+  background: rgba(255,255,255,0.2);
+  border: 1.5px solid rgba(255,255,255,0.4);
+  border-radius: 22px;
+  color: rgba(255,255,255,0.92);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.78rem; font-weight: 600;
+  padding: 0.5rem 1.2rem;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background 0.2s, opacity 0.2s;
+}
+.ds-shuffle-btn:not(:disabled):hover { background: rgba(255,255,255,0.33); }
+.ds-shuffle-btn:disabled { opacity: 0.38; cursor: default; }
+
+.ds-skip-btn {
+  display: flex; align-items: center; gap: 0.4rem;
+  background: rgba(251,113,133,0.18);
+  border: 1.5px solid rgba(251,113,133,0.45);
+  border-radius: 22px;
+  color: rgba(255,180,188,0.95);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.78rem; font-weight: 600;
+  padding: 0.5rem 1.2rem;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background 0.2s, opacity 0.2s;
+}
+.ds-skip-btn:not(:disabled):hover { background: rgba(251,113,133,0.32); }
+.ds-skip-btn:disabled { opacity: 0.38; cursor: default; }
 
 /* ============================================================
    MCQ Panel (light glass, slides up from bottom)
@@ -509,9 +544,10 @@
     margin-top: 0.75rem;
   }
 
-  /* Larger answer slots */
+  /* Larger answer slots – equal flex distribution */
   .ds-slot {
-    width:  clamp(40px, calc(560px / var(--wl) - 8px), 64px);
+    min-width: 36px;
+    max-width: clamp(40px, calc(560px / var(--wl) - 8px), 70px);
     height: clamp(48px, 7.5vh, 70px);
     font-size: clamp(1.1rem, 3.5vh, 1.6rem);
     border-radius: 14px;
@@ -530,8 +566,10 @@
   /* More breathing room for the spacer */
   .ds-spacer { max-height: 90px; }
 
-  .ds-controls { padding: 0.75rem 1rem 1.4rem; }
-  .ds-clear-btn { font-size: 0.86rem; padding: 0.55rem 1.4rem; }
+  .ds-controls { padding: 0.75rem 1rem 1.4rem; gap: 1rem; }
+  .ds-clear-btn,
+  .ds-shuffle-btn,
+  .ds-skip-btn { font-size: 0.86rem; padding: 0.55rem 1.4rem; }
 }
 
 /* ============================================================
@@ -566,4 +604,63 @@
   .ds-choice   { font-size: 0.91rem; padding: 0.88rem 1.05rem; }
   .ds-next-btn { font-size: 1rem; padding: 1.05rem; }
   .ds-fact p   { font-size: 0.83rem; }
+}
+
+/* ── Responsive: small phones (≤ 480px) ─────────────────── */
+@media (max-width: 480px) {
+  .ds-hud { padding: 0.55rem 0.85rem; }
+  .ds-hud-score { font-size: 0.82rem; min-width: 38px; }
+  .ds-hud-lv    { font-size: 0.72rem; }
+  .ds-dot       { width: 6px; height: 6px; }
+  .ds-hud-dots  { gap: 3px; }
+
+  .ds-dim-tag { font-size: 0.56rem; padding: 0.22rem 0.7rem; margin-top: 0.35rem; }
+
+  .ds-answer-row { padding: 0 0.75rem; margin-top: 0.6rem; gap: 4px; }
+
+  .ds-hint-area { margin-top: 0.35rem; }
+  .ds-hint-text { font-size: 0.7rem; max-width: calc(100vw - 2rem); padding: 0.25rem 0.7rem; }
+  .ds-hint-btn  { font-size: 0.68rem; padding: 0.22rem 0.65rem; }
+
+  .ds-spacer { max-height: 20px; }
+
+  .ds-controls { padding: 0.4rem 0.6rem 0.7rem; gap: 0.4rem; }
+  .ds-clear-btn,
+  .ds-shuffle-btn,
+  .ds-skip-btn {
+    font-size: 0.7rem;
+    padding: 0.42rem 0.7rem;
+    gap: 0.25rem;
+    border-radius: 18px;
+  }
+  /* hide button labels on very tight widths, show only icon */
+  .ds-clear-btn span,
+  .ds-shuffle-btn span,
+  .ds-skip-btn span { display: none; }
+
+  .ds-mcq-panel { padding: 1.1rem 1rem 1.8rem; }
+  .ds-mcq-q     { font-size: 0.82rem; padding: 0.72rem 0.85rem; }
+  .ds-choice    { font-size: 0.82rem; padding: 0.7rem 0.85rem; }
+  .ds-next-btn  { font-size: 0.88rem; padding: 0.88rem; }
+  .ds-fact p    { font-size: 0.76rem; }
+}
+
+/* ── Responsive: very small phones (≤ 380px) ─────────────── */
+@media (max-width: 380px) {
+  .ds-hud { padding: 0.45rem 0.65rem; }
+  .ds-hud-dots { gap: 2px; }
+  .ds-dot  { width: 5px; height: 5px; }
+
+  .ds-controls { gap: 0.3rem; }
+  .ds-clear-btn,
+  .ds-shuffle-btn,
+  .ds-skip-btn  { padding: 0.4rem 0.55rem; }
+
+  .ds-mcq-panel { padding: 1rem 0.85rem 1.5rem; gap: 0.7rem; }
+
+  .ds-mcq-letter {
+    width: 28px;
+    height: 30px;
+    font-size: 0.88rem;
+  }
 }

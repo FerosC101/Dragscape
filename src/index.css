@@ -29,6 +29,9 @@
 html {
   font-size: 16px;
   scroll-behavior: smooth;
+  /* Prevent iOS from boosting font sizes on orientation change */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -50,6 +53,8 @@ button, input, textarea, select {
 
 button {
   cursor: pointer;
+  /* Remove 300ms tap delay on iOS / older Android */
+  touch-action: manipulation;
 }
 
 img, svg {

@@ -7,14 +7,23 @@ import {
   useState, useRef, useCallback, useEffect, useMemo,
   type CSSProperties,
 } from 'react'
-import { Star, Lightbulb, ChevronRight, RotateCcw, Home } from 'lucide-react'
+import { Star, Lightbulb, ChevronRight, RotateCcw, Home, Shuffle, SkipForward } from 'lucide-react'
 import type { Level } from '../../types'
 import './dragGame.css'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const TILE_R   = 30          // half of tile box size (px)
-const CIRCLE_R = 108         // radius of circular letter ring (px)
-const CSIZE    = (CIRCLE_R + TILE_R + 16) * 2   // circle container px ≈ 308
+const CIRCLE_R = 108         // base radius of circular letter ring (px)
+
+// Dynamic helpers – grow the ring so tiles are equally spaced and never overlap
+function circleR(n: number): number {
+  if (n <= 1) return CIRCLE_R
+  const minR = Math.ceil(TILE_R / Math.sin(Math.PI / n)) + 10
+  return Math.max(CIRCLE_R, minR)
+}
+function cSizeFor(n: number): number {
+  return (circleR(n) + TILE_R + 16) * 2
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Tile { id: string; letter: string; x: number; y: number }
@@ -22,13 +31,14 @@ interface Tile { id: string; letter: string; x: number; y: number }
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function makeTiles(letters: string[]): Tile[] {
   const n = letters.length
+  const r = circleR(n)
   return letters.map((letter, i) => {
     const rad = ((360 / n) * i - 90) * (Math.PI / 180)
     return {
       id: `t-${i}`,
       letter,
-      x: Math.round(CIRCLE_R * Math.cos(rad)),
-      y: Math.round(CIRCLE_R * Math.sin(rad)),
+      x: Math.round(r * Math.cos(rad)),
+      y: Math.round(r * Math.sin(rad)),
     }
   })
 }
@@ -49,7 +59,10 @@ export default function DragGame({
   level, levelIndex, totalLevels, score, onCorrectMcq, onWrongMcq, onExit,
 }: Props) {
 
-  const tiles = useMemo(() => makeTiles(level.letters), [level])
+  const [shuffledLetters, setShuffledLetters] = useState<string[]>(level.letters)
+  const tiles = useMemo(() => makeTiles(shuffledLetters), [shuffledLetters])
+  const csize = cSizeFor(shuffledLetters.length)
+  const half  = csize / 2
 
   const [selIds,      setSelIds]      = useState<string[]>([])
   const [phase,       setPhase]       = useState<'idle' | 'correct' | 'wrong'>('idle')
@@ -64,7 +77,8 @@ export default function DragGame({
     if (w >= 1400) return 1.65
     if (w >= 1024) return 1.45
     if (w >= 768)  return 1.25
-    return 1
+    if (w >= 381)  return 1
+    return 0.82
   })
 
   useEffect(() => {
@@ -73,7 +87,8 @@ export default function DragGame({
       if (w >= 1400)      setCircleScale(1.65)
       else if (w >= 1024) setCircleScale(1.45)
       else if (w >= 768)  setCircleScale(1.25)
-      else                setCircleScale(1)
+      else if (w >= 381)  setCircleScale(1)
+      else                setCircleScale(0.82)
     }
     window.addEventListener('resize', update)
     return () => window.removeEventListener('resize', update)
@@ -94,6 +109,7 @@ export default function DragGame({
     setPhase('idle'); phaseRef.current = 'idle'
     setMcqOpen(false); setMcqAnswered(false)
     setChosenId(null); setHint(false)
+    setShuffledLetters(level.letters)
     pressing.current = false
   }, [level])
 
@@ -168,6 +184,29 @@ export default function DragGame({
     selRef.current = []; setSelIds([])
   }
 
+  const handleShuffle = useCallback(() => {
+    if (phaseRef.current !== 'idle') return
+    setShuffledLetters(prev => {
+      const arr = [...prev]
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[arr[i], arr[j]] = [arr[j], arr[i]]
+      }
+      // Ensure the result is different from the current order
+      if (arr.join('') === prev.join('') && arr.length > 1) arr.push(arr.shift()!)
+      return arr
+    })
+    selRef.current = []; setSelIds([])
+  }, [])
+
+  const handleSkip = useCallback(() => {
+    if (phaseRef.current !== 'idle') return
+    // Flash red then count the level as wrong and advance
+    selRef.current = []; setSelIds([])
+    setPhase('wrong'); phaseRef.current = 'wrong'
+    setTimeout(() => onWrongMcq(), 600)
+  }, [onWrongMcq])
+
   // ── MCQ ─────────────────────────────────────────────────────────────────────
   function handleChoice(id: string) {
     if (mcqAnswered) return
@@ -179,7 +218,6 @@ export default function DragGame({
   }
 
   // ── SVG lines between selected tiles ────────────────────────────────────────
-  const half = CSIZE / 2
 
   return (
     <div className="ds-game" style={{ '--accent': level.accentColor } as CSSProperties}>
@@ -254,14 +292,14 @@ export default function DragGame({
         ref={circleRef}
         className="ds-circle"
         style={{
-          width: CSIZE,
-          height: CSIZE,
+          width: csize,
+          height: csize,
           touchAction: 'none',
           transform: `scale(${circleScale})`,
           transformOrigin: 'center',
           // compensate so the element takes correct layout space after scale
-          marginTop:    `${((circleScale - 1) * CSIZE) / 2}px`,
-          marginBottom: `${((circleScale - 1) * CSIZE) / 2}px`,
+          marginTop:    `${((circleScale - 1) * csize) / 2}px`,
+          marginBottom: `${((circleScale - 1) * csize) / 2}px`,
         } as CSSProperties}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -271,7 +309,7 @@ export default function DragGame({
         {/* SVG connection lines */}
         <svg
           className="ds-lines"
-          viewBox={`0 0 ${CSIZE} ${CSIZE}`}
+          viewBox={`0 0 ${csize} ${csize}`}
           aria-hidden
         >
           {selIds.length > 1 && selIds.map((id, i) => {
@@ -323,15 +361,33 @@ export default function DragGame({
         </div>
       </div>
 
-      {/* ── Clear button ── */}
+      {/* ── Controls ── */}
       <div className="ds-controls">
+        <button
+          className="ds-shuffle-btn"
+          onClick={handleShuffle}
+          disabled={phase !== 'idle'}
+          title="Shuffle letters"
+        >
+          <Shuffle size={14} />
+          <span>Shuffle</span>
+        </button>
         <button
           className="ds-clear-btn"
           onClick={clearSel}
           disabled={selIds.length === 0 || phase !== 'idle'}
         >
           <RotateCcw size={14} />
-          Clear
+          <span>Clear</span>
+        </button>
+        <button
+          className="ds-skip-btn"
+          onClick={handleSkip}
+          disabled={phase !== 'idle'}
+          title="Skip this word (counts as incorrect)"
+        >
+          <SkipForward size={14} />
+          <span>Skip</span>
         </button>
       </div>
 

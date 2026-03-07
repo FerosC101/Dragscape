@@ -21,18 +21,19 @@ const DIMENSIONS = [
 export default function LoginScreen({ onSwitchToRegister }: Props) {
   const { login } = useAuth()
 
-  const [identifier, setIdentifier] = useState('')
-  const [password,   setPassword]   = useState('')
-  const [showPw,     setShowPw]     = useState(false)
-  const [error,      setError]      = useState('')
-  const [loading,    setLoading]    = useState(false)
+  const [identifier,  setIdentifier]  = useState('')
+  const [password,    setPassword]    = useState('')
+  const [showPw,      setShowPw]      = useState(false)
+  const [error,       setError]       = useState('')
+  const [loading,     setLoading]     = useState(false)
+  const [rememberMe,  setRememberMe]  = useState(false)
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
     if (!identifier.trim() || !password) { setError('Please fill in all fields.'); return }
     setLoading(true)
-    const result = await login(identifier, password)
+    const result = await login(identifier, password, rememberMe)
     setLoading(false)
     if (!result.success) setError(result.error ?? 'Login failed.')
   }
@@ -106,6 +107,17 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
               </button>
             </div>
           </div>
+
+          {/* Remember Me */}
+          <label className="auth-remember">
+            <input
+              type="checkbox"
+              className="auth-remember-check"
+              checked={rememberMe}
+              onChange={e => setRememberMe(e.target.checked)}
+            />
+            <span>Remember me</span>
+          </label>
 
           {/* Error */}
           {error && (

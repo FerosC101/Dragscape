@@ -1,33 +1,23 @@
-import { useState } from 'react';
-import { BookOpen, Search, FileText, Type, Gamepad2, ChevronRight, LogOut, Zap, Flame, Crown, UserCircle2 } from 'lucide-react';
+import { BookOpen, Search, FileText, Type, Gamepad2, ChevronRight, LogOut, UserCircle2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import type { Difficulty } from '../../types';
-import { getLevelsByDifficulty } from '../../data/levels';
+import type { Dimension } from '../../types';
+
 import './introScreen.css';
 
 interface Props {
-  onStart: (difficulty: Difficulty) => void;
+  onStart: (dimension: Dimension) => void;
   onViewProfile: () => void;
 }
 
-const DIMENSIONS = [
-  { icon: BookOpen,  label: 'Word Recognition',       color: '#4ade80' },
-  { icon: Search,    label: 'Meaning Identification',  color: '#a78bfa' },
-  { icon: FileText,  label: 'Context Comprehension',   color: '#fbbf24' },
-  { icon: Type,      label: 'Word Form',               color: '#38bdf8' },
-];
-
-const DIFFICULTIES: { key: Difficulty; label: string; icon: typeof Zap; desc: string; color: string }[] = [
-  { key: 'easy',   label: 'Easy',   icon: Zap,   desc: 'Start here — build confidence',    color: '#4ade80' },
-  { key: 'medium', label: 'Medium', icon: Flame, desc: 'Challenge yourself a bit more',    color: '#fbbf24' },
-  { key: 'hard',   label: 'Hard',   icon: Crown, desc: 'Prove your vocabulary mastery',    color: '#fb7185' },
+const DIMENSIONS: { icon: typeof BookOpen; label: Dimension; color: string; desc: string }[] = [
+  { icon: BookOpen,  label: 'Word Recognition',       color: '#4ade80', desc: 'Spelling & letter patterns' },
+  { icon: Search,    label: 'Meaning Identification',  color: '#a78bfa', desc: 'Definitions & synonyms' },
+  { icon: FileText,  label: 'Context Comprehension',   color: '#fbbf24', desc: 'Words in sentences' },
+  { icon: Type,      label: 'Word Form',               color: '#38bdf8', desc: 'Correct word usage' },
 ];
 
 export default function IntroScreen({ onStart, onViewProfile }: Props) {
   const { logout } = useAuth();
-  const [selected, setSelected] = useState<Difficulty>('easy');
-
-  const count = getLevelsByDifficulty(selected).length;
 
   return (
     <div className="is-root">
@@ -59,44 +49,35 @@ export default function IntroScreen({ onStart, onViewProfile }: Props) {
           <span className="is-title-drag">DRAG</span>
           <span className="is-title-scape">SCAPE</span>
         </h1>
-        <p className="is-subtitle">Build words. Master meanings. Level up.</p>
+        <p className="is-subtitle">Choose a dimension to begin your challenge.</p>
 
-        {/* Dimension cards */}
+        {/* Dimension cards — each one starts that dimension */}
+        <p className="is-section-label" style={{ marginBottom: '-0.25rem' }}>SELECT A DIMENSION</p>
         <div className="is-dims">
-          {DIMENSIONS.map(({ icon: Icon, label, color }) => (
-            <div className="is-dim-card" key={label}>
+          {DIMENSIONS.map(({ icon: Icon, label, color, desc }) => (
+            <button
+              className="is-dim-card is-dim-card--btn"
+              key={label}
+              onClick={() => onStart(label)}
+              style={{ '--dim-color': color } as React.CSSProperties}
+            >
               <span className="is-dim-icon" style={{ color }}>
-                <Icon size={16} strokeWidth={2} />
+                <Icon size={18} strokeWidth={2} />
               </span>
-              <span className="is-dim-label">{label}</span>
-            </div>
+              <span className="is-dim-text">
+                <span className="is-dim-label">{label}</span>
+                <span className="is-dim-desc">{desc}</span>
+              </span>
+              <ChevronRight size={14} className="is-dim-arrow" />
+            </button>
           ))}
-        </div>
-
-        {/* Difficulty picker */}
-        <div className="is-difficulty-section">
-          <p className="is-section-label">SELECT DIFFICULTY</p>
-          <div className="is-difficulty-row">
-            {DIFFICULTIES.map(({ key, label, icon: Icon, desc, color }) => (
-              <button
-                key={key}
-                className={`is-diff-btn ${selected === key ? 'is-diff-btn--active' : ''}`}
-                style={{ '--diff-color': color } as React.CSSProperties}
-                onClick={() => setSelected(key)}
-              >
-                <Icon size={18} strokeWidth={2.2} />
-                <span className="is-diff-label">{label}</span>
-                <span className="is-diff-desc">{desc}</span>
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Info strip */}
         <div className="is-info-strip">
           <div className="is-info-item">
-            <span className="is-info-num">{count}</span>
-            <span className="is-info-desc">Levels</span>
+            <span className="is-info-num">10</span>
+            <span className="is-info-desc">Questions</span>
           </div>
           <div className="is-info-sep" />
           <div className="is-info-item">
@@ -105,20 +86,14 @@ export default function IntroScreen({ onStart, onViewProfile }: Props) {
           </div>
           <div className="is-info-sep" />
           <div className="is-info-item">
-            <span className="is-info-num">~{Math.ceil(count * 0.75)}</span>
+            <span className="is-info-num">~8</span>
             <span className="is-info-desc">Minutes</span>
           </div>
         </div>
 
-        {/* Start button */}
-        <button className="is-start-btn" onClick={() => onStart(selected)}>
-          Start Playing
-          <ChevronRight size={20} strokeWidth={2.5} />
-        </button>
-
         <p className="is-instructions">
           Drag letters to form the mystery word, then answer a comprehension question.
-          All four vocabulary dimensions are tested at your chosen difficulty.
+          Complete all 4 dimensions to master Grade 7 vocabulary.
         </p>
       </div>
     </div>

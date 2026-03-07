@@ -51,17 +51,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async fbUser => {
+      // Read flags inside the callback so they reflect values set by login()/register()
+      const remember = localStorage.getItem('ds_remember') === '1'
+      const session  = sessionStorage.getItem('ds_sid')    === '1'
+
       try {
         if (fbUser) {
-          // Try Firestore profile first; fall back to Firebase Auth data
-          const profile = await fetchProfile(fbUser.uid)
-          setUser(profile ?? {
-            id:        fbUser.uid,
-            fullName:  fbUser.displayName ?? '',
-            username:  '',
-            email:     fbUser.email ?? '',
-            createdAt: new Date().toISOString(),
-          })
+          if (!remember && !session) {
+            // Stale Firebase token — silently discard and sign out
+            setUser(null)
+            setBooting(false)
+            signOut(auth).catch(() => {})
+            return
+          }
+
+          // Try Firestore profile first
+          let profile = await fetchProfile(fbUser.uid)
+
+          if (!profile) {
+            // No profile in Firestore — build one from Auth data and persist it.
+            // This self-heals accounts whose initial Firestore write failed
+            // (e.g. because the security rules weren't deployed at sign-up time).
+            profile = {
+              id:        fbUser.uid,
+              fullName:  fbUser.displayName ?? '',
+              username:  '',
+              email:     fbUser.email ?? '',
+              createdAt: new Date().toISOString(),
+            }
+            try {
+              await setDoc(doc(db, 'users', fbUser.uid), profile, { merge: true })
+            } catch (writeErr) {
+              console.warn('[Dragscape] Could not write fallback profile:', writeErr)
+            }
+          }
+
+          setUser(profile)
         } else {
           setUser(null)
         }
@@ -86,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // ── Login ─────────────────────────────────────────────────────────────────
-  const login = async (identifier: string, password: string): Promise<AuthResult> => {
+  const login = async (identifier: string, password: string, rememberMe = false): Promise<AuthResult> => {
     try {
       let email = identifier.trim().toLowerCase()
       let knownProfile: User | null = null
@@ -102,8 +127,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const cred = await signInWithEmailAndPassword(auth, email, password)
 
+      // Set session markers
+      sessionStorage.setItem('ds_sid', '1')
+      if (rememberMe) {
+        localStorage.setItem('ds_remember', '1')
+      } else {
+        localStorage.removeItem('ds_remember')
+      }
+
       // Immediately unblock the UI — don't wait for onAuthStateChanged + Firestore
-      // (onAuthStateChanged will still run and update with full profile in background)
       setUser(knownProfile ?? {
         id:        cred.user.uid,
         fullName:  cred.user.displayName ?? '',
@@ -136,6 +168,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       )
       await updateProfile(cred.user, { displayName: data.fullName.trim() })
 
+      // Mark this as a live session so onAuthStateChanged lets the new user through
+      sessionStorage.setItem('ds_sid', '1')
+
       const profile: User = {
         id:        cred.user.uid,
         fullName:  data.fullName.trim(),
@@ -161,6 +196,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ── Logout ────────────────────────────────────────────────────────────────
   const logout = async () => {
+    localStorage.removeItem('ds_remember')
+    sessionStorage.removeItem('ds_sid')
     await signOut(auth)
     setUser(null)
   }

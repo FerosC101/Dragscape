@@ -1,13 +1,20 @@
 import { Trophy, Star, RotateCcw, Home, BookOpen, Search, FileText, Type, LogOut, CheckCircle2, XCircle, UserCircle2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import type { Difficulty, Dimension, Level } from '../../types';
+import type { Dimension, Level } from '../../types';
+
+const DIM_COLORS: Record<Dimension, string> = {
+  'Word Recognition':       '#4ade80',
+  'Meaning Identification':  '#a78bfa',
+  'Context Comprehension':   '#fbbf24',
+  'Word Form':               '#38bdf8',
+};
 import './resultsScreen.css';
 
 interface Props {
   score: number;
   levels: Level[];
   results: boolean[];
-  difficulty: Difficulty;
+  dimension: Dimension;
   onPlayAgain: () => void;
   onHome:      () => void;
   onViewProfile: () => void;
@@ -29,12 +36,6 @@ function getStars(pct: number): number {
   return 0;
 }
 
-const DIFF_LABELS: Record<Difficulty, { label: string; color: string }> = {
-  easy:   { label: '⚡ Easy',   color: '#4ade80' },
-  medium: { label: '🔥 Medium', color: '#fbbf24' },
-  hard:   { label: '👑 Hard',   color: '#fb7185' },
-};
-
 const DIM_META: { key: Dimension; icon: typeof BookOpen; color: string }[] = [
   { key: 'Word Recognition',       icon: BookOpen, color: '#4ade80' },
   { key: 'Meaning Identification',  icon: Search,   color: '#a78bfa' },
@@ -42,13 +43,12 @@ const DIM_META: { key: Dimension; icon: typeof BookOpen; color: string }[] = [
   { key: 'Word Form',               icon: Type,     color: '#38bdf8' },
 ];
 
-export default function ResultsScreen({ score, levels, results, difficulty, onPlayAgain, onHome, onViewProfile }: Props) {
+export default function ResultsScreen({ score, levels, results, dimension, onPlayAgain, onHome, onViewProfile }: Props) {
   const { logout } = useAuth();
   const total = levels.length;
   const pct = total > 0 ? Math.round((score / total) * 100) : 0;
   const stars = getStars(pct);
   const descriptor = getDescriptor(pct);
-  const diffInfo = DIFF_LABELS[difficulty];
 
   // Group per-dimension scores
   const dimScores = DIM_META.map(({ key, icon, color }) => {
@@ -81,9 +81,9 @@ export default function ResultsScreen({ score, levels, results, difficulty, onPl
       </div>
 
       <div className="rs-content">
-        {/* Difficulty badge */}
-        <div className="rs-diff-badge" style={{ color: diffInfo.color, borderColor: diffInfo.color }}>
-          {diffInfo.label}
+        {/* Dimension badge */}
+        <div className="rs-diff-badge" style={{ color: DIM_COLORS[dimension], borderColor: DIM_COLORS[dimension] }}>
+          {dimension} · 10 Questions
         </div>
 
         {/* Trophy */}

@@ -3,7 +3,7 @@ import { getAuth } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 import { getAnalytics, isSupported } from 'firebase/analytics'
 
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey:            'AIzaSyBIEd54VWcaAtYYla6NwxxJzSHxAW42_Ik',
   authDomain:        'dragscape.firebaseapp.com',
   projectId:         'dragscape',

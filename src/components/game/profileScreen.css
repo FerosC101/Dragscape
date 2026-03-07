@@ -320,3 +320,40 @@
   .ps-stat-num   { font-size: 1.7rem; }
   .ps-record     { padding: 1rem 1.25rem; }
 }
+
+/* ── Responsive: small phones (≤ 480px) ─────────────────── */
+@media (max-width: 480px) {
+  .ps-topbar     { padding: 0.55rem 0.85rem; }
+  .ps-topbar-title { font-size: 0.82rem; }
+  .ps-back-btn, .ps-icon-btn { width: 30px; height: 30px; }
+
+  .ps-content {
+    padding: 1.1rem 0.85rem 2.5rem;
+    gap: 0.8rem;
+  }
+
+  .ps-avatar    { width: 68px; height: 68px; }
+  .ps-user-name { font-size: 1rem; }
+
+  .ps-stats-row { padding: 0.85rem 1rem; gap: 0.85rem; }
+  .ps-stat-num  { font-size: 1.3rem; }
+  .ps-stat-label { font-size: 0.6rem; }
+  .ps-stat-sep  { height: 24px; }
+
+  .ps-record    { padding: 0.75rem 0.85rem; }
+  .ps-record-dim-label { font-size: 0.68rem; }
+}
+
+/* ── Responsive: very small phones (≤ 380px) ─────────────── */
+@media (max-width: 380px) {
+  .ps-content { padding: 0.9rem 0.7rem 2rem; gap: 0.65rem; }
+
+  .ps-avatar    { width: 60px; height: 60px; }
+  .ps-user-name { font-size: 0.95rem; }
+
+  .ps-stats-row { padding: 0.75rem 0.75rem; gap: 0.65rem; }
+  .ps-stat-num  { font-size: 1.2rem; }
+  .ps-stat-sep  { display: none; }
+
+  .ps-record    { padding: 0.65rem 0.75rem; }
+}
