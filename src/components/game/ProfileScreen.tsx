@@ -45,7 +45,7 @@ export default function ProfileScreen({ onBack }: Props) {
     if (!user) return;
     (async () => {
       try {
-        const ref  = collection(db, 'users', user.id, 'gameHistory');
+        const ref  = collection(db, 'users', user.id, 'gameHistoryV2');
         const q    = query(ref, orderBy('playedAt', 'desc'), limit(20));
         const snap = await getDocs(q);
         setHistory(snap.docs.map(d => d.data() as GameRecord));

@@ -125,15 +125,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email = knownProfile.email
       }
 
-      const cred = await signInWithEmailAndPassword(auth, email, password)
-
-      // Set session markers
+      // Set session markers BEFORE sign-in so onAuthStateChanged sees them
+      // immediately when it fires — prevents the listener from treating the
+      // new login as a stale token and calling signOut.
       sessionStorage.setItem('ds_sid', '1')
       if (rememberMe) {
         localStorage.setItem('ds_remember', '1')
       } else {
         localStorage.removeItem('ds_remember')
       }
+
+      const cred = await signInWithEmailAndPassword(auth, email, password)
 
       // Immediately unblock the UI — don't wait for onAuthStateChanged + Firestore
       setUser(knownProfile ?? {
@@ -146,6 +148,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return { success: true }
     } catch (err: unknown) {
+      // Clean up session markers if login failed so they don't linger
+      sessionStorage.removeItem('ds_sid')
+      localStorage.removeItem('ds_remember')
       const code = (err as { code?: string }).code ?? ''
       return { success: false, error: friendlyError(code) }
     }
@@ -161,15 +166,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const snap = await getDocs(q)
       if (!snap.empty) return { success: false, error: 'Username already taken — try another.' }
 
+      // Set session marker BEFORE creating the account so onAuthStateChanged
+      // sees it immediately when Firebase fires the auth-state change.
+      sessionStorage.setItem('ds_sid', '1')
+
       const cred = await createUserWithEmailAndPassword(
         auth,
         data.email.trim().toLowerCase(),
         data.password,
       )
       await updateProfile(cred.user, { displayName: data.fullName.trim() })
-
-      // Mark this as a live session so onAuthStateChanged lets the new user through
-      sessionStorage.setItem('ds_sid', '1')
 
       const profile: User = {
         id:        cred.user.uid,
@@ -189,6 +195,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(profile)
       return { success: true }
     } catch (err: unknown) {
+      // Clean up session marker if registration failed
+      sessionStorage.removeItem('ds_sid')
       const code = (err as { code?: string }).code ?? ''
       return { success: false, error: friendlyError(code) }
     }

@@ -585,7 +585,7 @@ export default function AdminDashboard() {
                   <div className="adm-top-list">
                     {[...users]
                       .filter(u => u.gamesPlayed > 0)
-                      .sort((a, b) => b.bestPct - a.bestPct)
+                      .sort((a, b) => b.avgPct - a.avgPct)
                       .slice(0, 5)
                       .map((u, i) => (
                         <div key={u.id} className="adm-top-row">
@@ -595,10 +595,10 @@ export default function AdminDashboard() {
                             <span className="adm-top-user">@{u.username}</span>
                           </div>
                           <div className="adm-top-right">
-                            <span className="adm-top-score" style={{ color: getRange(u.bestPct).color }}>
-                              {u.bestPct}%
+                            <span className="adm-top-score" style={{ color: getRange(u.avgPct).color }}>
+                              {u.avgPct}%
                             </span>
-                            <span className="adm-top-desc">{getRange(u.bestPct).label}</span>
+                            <span className="adm-top-desc">{getRange(u.avgPct).label}</span>
                           </div>
                         </div>
                       ))}

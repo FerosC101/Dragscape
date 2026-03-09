@@ -62,7 +62,6 @@ export const ALL_LEVELS: Level[] = [
     number: 1,
     dimension: 'Word Recognition',
     difficulty: 'easy',
-    ...dimColors('wr', 'easy'),
     accentColor: dimColors('wr', 'easy').accent,
     bgColor: dimColors('wr', 'easy').bg,
     letters: ['G', 'N', 'I', 'V', 'R', 'A', 'T', 'S'],
@@ -258,7 +257,7 @@ export const ALL_LEVELS: Level[] = [
   // ║  PART II: MEANING IDENTIFICATION (10 items)
   // ╚═══════════════════════════════════════════════════════════════════════════
 
-  // ── Easy (11-14) ──────────────────────────────────────────────────────────
+  // ── Easy (11-13) ──────────────────────────────────────────────────────────
   {
     number: 11,
     dimension: 'Meaning Identification',
@@ -458,7 +457,7 @@ export const ALL_LEVELS: Level[] = [
   // ║  PART III: CONTEXT COMPREHENSION / WORD USAGE (10 items)
   // ╚═══════════════════════════════════════════════════════════════════════════
 
-  // ── Easy (21-24) ──────────────────────────────────────────────────────────
+  // ── Easy (21-23) ──────────────────────────────────────────────────────────
   {
     number: 21,
     dimension: 'Context Comprehension',
@@ -658,7 +657,7 @@ export const ALL_LEVELS: Level[] = [
   // ║  PART IV: WORD FORM (10 items)
   // ╚═══════════════════════════════════════════════════════════════════════════
 
-  // ── Easy (31-34) ──────────────────────────────────────────────────────────
+  // ── Easy (31-33) ──────────────────────────────────────────────────────────
   {
     number: 31,
     dimension: 'Word Form',
