@@ -41,11 +41,11 @@ service cloud.firestore {
 
     // ── Regular users: own game history sub-collections ────────────────────
     match /users/{userId}/gameHistory/{gameId} {
-      allow read, write: if isOwner(userId);
+      allow read, write: if isOwner(userId) || isAdmin();
     }
 
     match /users/{userId}/gameHistoryV2/{gameId} {
-      allow read, write: if isOwner(userId);
+      allow read, write: if isOwner(userId) || isAdmin();
     }
   }
 }

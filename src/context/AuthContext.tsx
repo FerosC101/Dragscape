@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react'
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -49,6 +49,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user,    setUser]    = useState<User | null>(null)
   const [booting, setBooting] = useState(true)
 
+  // Set to true while login() / register() is in progress so the
+  // onAuthStateChanged listener never treats the fresh session as stale.
+  const authActionInFlight = useRef(false)
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async fbUser => {
       // Read flags inside the callback so they reflect values set by login()/register()
@@ -57,6 +61,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       try {
         if (fbUser) {
+          // If a login/register action is in flight, let that function
+          // handle all Firestore writes and user-state updates.  Touching
+          // Firestore here would race and could overwrite the correct profile.
+          if (authActionInFlight.current) {
+            setBooting(false)
+            return
+          }
+
           if (!remember && !session) {
             // Stale Firebase token — silently discard and sign out
             setUser(null)
@@ -113,6 +125,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ── Login ─────────────────────────────────────────────────────────────────
   const login = async (identifier: string, password: string, rememberMe = false): Promise<AuthResult> => {
     try {
+      authActionInFlight.current = true
+
       let email = identifier.trim().toLowerCase()
       let knownProfile: User | null = null
 
@@ -120,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!email.includes('@')) {
         const q    = query(collection(db, 'users'), where('username', '==', email))
         const snap = await getDocs(q)
-        if (snap.empty) return { success: false, error: 'No account found with that username.' }
+        if (snap.empty) { authActionInFlight.current = false; return { success: false, error: 'No account found with that username.' } }
         knownProfile = snap.docs[0].data() as User
         email = knownProfile.email
       }
@@ -146,8 +160,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         createdAt: new Date().toISOString(),
       })
 
+      authActionInFlight.current = false
       return { success: true }
     } catch (err: unknown) {
+      authActionInFlight.current = false
       // Clean up session markers if login failed so they don't linger
       sessionStorage.removeItem('ds_sid')
       localStorage.removeItem('ds_remember')
@@ -159,12 +175,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ── Register ──────────────────────────────────────────────────────────────
   const register = async (data: RegisterData): Promise<AuthResult> => {
     try {
+      authActionInFlight.current = true
+
       const username = data.username.trim().toLowerCase()
 
       // Check username uniqueness
       const q    = query(collection(db, 'users'), where('username', '==', username))
       const snap = await getDocs(q)
-      if (!snap.empty) return { success: false, error: 'Username already taken — try another.' }
+      if (!snap.empty) { authActionInFlight.current = false; return { success: false, error: 'Username already taken — try another.' } }
 
       // Set session marker BEFORE creating the account so onAuthStateChanged
       // sees it immediately when Firebase fires the auth-state change.
@@ -184,17 +202,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email:     data.email.trim().toLowerCase(),
         createdAt: new Date().toISOString(),
       }
-      try {
-        await setDoc(doc(db, 'users', cred.user.uid), profile)
-      } catch (fsErr) {
-        // Auth succeeded but Firestore profile write failed.
-        // Log it — the user can still play, but username login won't work
-        // until the profile is written.
-        console.error('[Dragscape] Failed to write user profile to Firestore:', fsErr)
+
+      // Write the profile — retry once after a short delay if the first
+      // attempt fails (Firebase Auth tokens can take a moment to propagate
+      // to Firestore's security-rule evaluator).
+      let written = false
+      for (let attempt = 0; attempt < 2 && !written; attempt++) {
+        try {
+          if (attempt > 0) await new Promise(r => setTimeout(r, 1000))
+          await setDoc(doc(db, 'users', cred.user.uid), profile)
+          written = true
+        } catch (fsErr) {
+          console.warn(`[Dragscape] Profile write attempt ${attempt + 1} failed:`, fsErr)
+        }
+      }
+      if (!written) {
+        console.error('[Dragscape] Could not write user profile after retries — user will be self-healed on next login.')
       }
       setUser(profile)
+      authActionInFlight.current = false
       return { success: true }
     } catch (err: unknown) {
+      authActionInFlight.current = false
       // Clean up session marker if registration failed
       sessionStorage.removeItem('ds_sid')
       const code = (err as { code?: string }).code ?? ''
