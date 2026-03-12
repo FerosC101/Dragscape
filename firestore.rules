@@ -30,9 +30,13 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
-    // ── Regular users: own profile document ───────────────────────────────
+    // ── User profiles ─────────────────────────────────────────────────────
+    // Read is public so username look-ups work during login & registration
+    // (the requester is not yet authenticated at that point).
+    // Only the document owner may write.
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read:  if true;
+      allow write: if isOwner(userId);
     }
 
     // ── Regular users: own game history sub-collections ────────────────────
